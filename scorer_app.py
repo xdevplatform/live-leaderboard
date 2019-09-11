@@ -21,8 +21,6 @@ creds["secret"] = os.environ["secret"]
 def homepage():
     return "Hello world"
 
-
-
 @app.route('/webhook', methods=['GET'])
 def webhook():
     if request.method == 'GET':
@@ -37,4 +35,8 @@ def webhook():
             return jsonify(crc_response), 200
         # if this isn't a crc handshake do nothing
         else:
-            return "Hello Fiona", 200
+            return "Hello world", 200
+        
+      
+if __name__ == '__main__':
+    app.run()
