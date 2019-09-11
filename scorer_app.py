@@ -21,8 +21,8 @@ creds["secret"] = os.environ["secret"]
 def homepage():
     return "Hello world"
 
-@app.route('/webhook', methods=['GET'])
-def webhook():
+@app.route('/scorer', methods=['GET','POST'])
+def scorer():
     if request.method == 'GET':
         # check to see if this is a challenge response request
         crc_token = request.args.get('crc_token')
@@ -36,6 +36,8 @@ def webhook():
         # if this isn't a crc handshake do nothing
         else:
             return "Hello world", 200
+    elif request.method == 'POST':
+        pass #Examine the incoming event... If DM, try to parse score. If Tweet, respond?
         
       
 if __name__ == '__main__':
