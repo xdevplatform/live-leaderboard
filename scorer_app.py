@@ -11,11 +11,10 @@ from datetime import datetime
 app = Flask(__name__)
 
 creds = {}
-creds["username"] = os.environ["username"]
-creds["consumer_key"] = os.environ["consumer_key"]
-creds["consumer_secret"] = os.environ["consumer_secret"]
-creds["token"] = os.environ["token"]
-creds["secret"] = os.environ["secret"]
+creds["consumer_key"] = os.environ["CONSUMER_KEY"]
+creds["consumer_secret"] = os.environ["CONSUMER_SECRET"]
+creds["token"] = os.environ["ACCESS_TOKEN"]
+creds["secret"] = os.environ["ACCESS_TOKEN_SECRET"]
 
 @app.route('/', methods=['GET'])
 def homepage():
