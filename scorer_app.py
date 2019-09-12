@@ -1,44 +1,87 @@
-import os
-from datetime import datetime, timedelta
-from flask import Flask, request, abort, jsonify
-import base64
-import hmac
-import hashlib
-import json
-import requests
-from requests_oauthlib import OAuth1,OAuth2
-from datetime import datetime
+#!/usr/bin/env python
+from flask import Flask, request, send_from_directory, make_response
+from http import HTTPStatus
+
+import Twitter, hashlib, hmac, base64, os, logging, json
+
+CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None)
+CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None)
 
 app = Flask(__name__)
 
-creds = {}
-creds["consumer_key"] = os.environ["CONSUMER_KEY"]
-creds["consumer_secret"] = os.environ["CONSUMER_SECRET"]
-creds["token"] = os.environ["ACCESS_TOKEN"]
-creds["secret"] = os.environ["ACCESS_TOKEN_SECRET"]
+#generic index route    
+@app.route('/')
+def default_route():
+    return send_from_directory('www', 'index.html')
 
-@app.route('/', methods=['GET'])
-def homepage():
-    return "Hello world"
+#The GET method for webhook should be used for the CRC check
+#TODO: add header validation (compare_digest https://docs.python.org/3.6/library/hmac.html)
+@app.route("/webhook", methods=["GET"])
+def twitterCrcValidation():
 
-@app.route('/scorer', methods=['GET','POST'])
-def scorer():
-    if request.method == 'GET':
-        # check to see if this is a challenge response request
-        crc_token = request.args.get('crc_token')
-        # if there's a crc token, we've got to reply with the secret
-        if crc_token is not None:
-            sha256_hash_digest = hmac.new(creds["consumer_secret"].encode("utf-8"), 
-                                 msg=crc_token.encode("utf-8"), 
-                                 digestmod=hashlib.sha256).digest()
-            crc_response = {'response_token': 'sha256=' + base64.b64encode(sha256_hash_digest).decode()}
-            return jsonify(crc_response), 200
-        # if this isn't a crc handshake do nothing
-        else:
-            return "Hello world", 200
-    elif request.method == 'POST':
-        pass #Examine the incoming event... If DM, try to parse score. If Tweet, respond?
-        
-      
+    crc = request.args['crc_token']
+
+    validation = hmac.new(
+        key=bytes(CONSUMER_SECRET, 'utf-8'),
+        msg=bytes(crc, 'utf-8'),
+        digestmod = hashlib.sha256
+    )
+    digested = base64.b64encode(validation.digest())
+    response = {
+        'response_token': 'sha256=' + format(str(digested)[2:-1])
+    }
+    print('responding to CRC call')
+
+    return json.dumps(response)
+
+#The POST method for webhook should be used for all other API events
+#TODO: add event-specific behaviours beyond Direct Message and Like
+@app.route("/webhook", methods=["POST"])
+def twitterEventReceived():
+
+    requestJson = request.get_json()
+
+    #dump to console for debugging purposes
+    print(json.dumps(requestJson, indent=4, sort_keys=True))
+
+    if 'favorite_events' in requestJson.keys():
+        #Tweet Favourite Event, process that
+        likeObject = requestJson['favorite_events'][0]
+        userId = likeObject.get('user', {}).get('id')
+
+        #event is from myself so ignore (Favourite event fires when you send a DM too)   
+        if userId == CURRENT_USER_ID:
+            return ('', HTTPStatus.OK)
+
+        Twitter.processLikeEvent(likeObject)
+
+    elif 'direct_message_events' in requestJson.keys():
+        #DM recieved, process that
+        eventType = requestJson['direct_message_events'][0].get("type")
+        messageObject = requestJson['direct_message_events'][0].get('message_create', {})
+        messageSenderId = messageObject.get('sender_id')
+
+        #event type isnt new message so ignore
+        if eventType != 'message_create':
+            return ('', HTTPStatus.OK)
+
+        #message is from myself so ignore (Message create fires when you send a DM too)   
+        if messageSenderId == CURRENT_USER_ID:
+            return ('', HTTPStatus.OK)
+
+        Twitter.processDirectMessageEvent(messageObject)
+
+    else:
+        #Event type not supported
+        return ('', HTTPStatus.OK)
+
+    return ('', HTTPStatus.OK)
+
+
 if __name__ == '__main__':
-    app.run()
+    # Bind to PORT if defined, otherwise default to 65010.
+    port = int(os.environ.get('PORT', 65010))
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+    app.run(host='0.0.0.0', port=port, debug=True)
