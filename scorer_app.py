@@ -12,7 +12,7 @@ app = Flask(__name__)
 #generic index route    
 @app.route('/')
 def default_route():
-    return send_from_directory('www', 'index.html')
+    return "Hello world"
 
 #The GET method for webhook should be used for the CRC check
 #TODO: add header validation (compare_digest https://docs.python.org/3.6/library/hmac.html)
