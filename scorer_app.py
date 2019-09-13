@@ -19,13 +19,6 @@ app = Flask(__name__)
 #generic index route    
 @app.route('/')
 def default_route():
-    '''Default route'''
-    app.logger.debug(‘this is a DEBUG message’)
-    app.logger.info(‘this is an INFO message’)
-    app.logger.warning(‘this is a WARNING message’)
-    app.logger.error(‘this is an ERROR message’)
-    app.logger.critical(‘this is a CRITICAL message’)
-
     return "Hello world"
 
 # The GET method for webhook should be used for the CRC check
