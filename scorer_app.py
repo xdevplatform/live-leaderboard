@@ -44,8 +44,11 @@ def twitter_crc_validation():
 def event_manager():
     if request.json['favorite_events']:
         app.logger.info("Someone liked a Tweet")
-    else:
+        print("Someone liked a Tweet")
+
         return "200"
+    else:
+        return "200"        
 
 
 #The POST method for webhook should be used for all other API events
