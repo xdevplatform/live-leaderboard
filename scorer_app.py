@@ -21,8 +21,7 @@ app = Flask(__name__)
 def default_route():
     return "Hello world"
 
-#The GET method for webhook should be used for the CRC check
-#TODO: add header validation (compare_digest https://docs.python.org/3.6/library/hmac.html)
+# The GET method for webhook should be used for the CRC check
 @app.route("/webhook", methods=["GET"])
 def twitter_crc_validation():
 
@@ -41,48 +40,57 @@ def twitter_crc_validation():
 
     return json.dumps(response)
 
+@app.route("/webhook", methods=["POST"])
+def event_manager():
+    if request.json['favorite_events']:
+        print("Someone liked a Tweet")
+    else:
+        return "200"
+
+
 #The POST method for webhook should be used for all other API events
 #TODO: add event-specific behaviours beyond Direct Message and Like
-@app.route("/webhook", methods=["POST"])
-def twitter_event_received():
 
-    requestJson = request.get_json()
+# @app.route("/webhook", methods=["POST"])
+# def twitter_event_received():
 
-    #dump to console for debugging purposes
-    print(json.dumps(requestJson, indent=4, sort_keys=True))
+#     requestJson = request.get_json()
 
-    if 'favorite_events' in requestJson.keys():
-        #Tweet Favourite Event, process that
-        likeObject = requestJson['favorite_events'][0]
-        userId = likeObject.get('user', {}).get('id')
+#     #dump to console for debugging purposes
+#     print(json.dumps(requestJson, indent=4, sort_keys=True))
 
-        #event is from myself so ignore (Favourite event fires when you send a DM too)   
-        if userId == CURRENT_USER_ID:
-            return ('', HTTPStatus.OK)
+#     if 'favorite_events' in requestJson.keys():
+#         #Tweet Favourite Event, process that
+#         likeObject = requestJson['favorite_events'][0]
+#         userId = likeObject.get('user', {}).get('id')
 
-        Twitter.processLikeEvent(likeObject)
+#         #event is from myself so ignore (Favourite event fires when you send a DM too)   
+#         if userId == CURRENT_USER_ID:
+#             return ('', HTTPStatus.OK)
 
-    elif 'direct_message_events' in requestJson.keys():
-        #DM recieved, process that
-        eventType = requestJson['direct_message_events'][0].get("type")
-        messageObject = requestJson['direct_message_events'][0].get('message_create', {})
-        messageSenderId = messageObject.get('sender_id')
+#         Twitter.processLikeEvent(likeObject)
 
-        #event type isnt new message so ignore
-        if eventType != 'message_create':
-            return ('', HTTPStatus.OK)
+#     elif 'direct_message_events' in requestJson.keys():
+#         #DM recieved, process that
+#         eventType = requestJson['direct_message_events'][0].get("type")
+#         messageObject = requestJson['direct_message_events'][0].get('message_create', {})
+#         messageSenderId = messageObject.get('sender_id')
 
-        #message is from myself so ignore (Message create fires when you send a DM too)   
-        if messageSenderId == CURRENT_USER_ID:
-            return ('', HTTPStatus.OK)
+#         #event type isnt new message so ignore
+#         if eventType != 'message_create':
+#             return ('', HTTPStatus.OK)
 
-        Twitter.processDirectMessageEvent(messageObject)
+#         #message is from myself so ignore (Message create fires when you send a DM too)   
+#         if messageSenderId == CURRENT_USER_ID:
+#             return ('', HTTPStatus.OK)
 
-    else:
-        #Event type not supported
-        return ('', HTTPStatus.OK)
+#         Twitter.processDirectMessageEvent(messageObject)
 
-    return ('', HTTPStatus.OK)
+#     else:
+#         #Event type not supported
+#         return ('', HTTPStatus.OK)
+
+#     return ('', HTTPStatus.OK)
 
 
 if __name__ == '__main__':
