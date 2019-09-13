@@ -2,7 +2,14 @@
 from flask import Flask, request, send_from_directory, make_response
 from http import HTTPStatus
 
-import Twitter, hashlib, hmac, base64, os, logging, json
+import base64
+import hashlib
+import hmac
+import logging
+import json
+import os
+
+import twitter
 
 CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None)
 CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None)
@@ -17,7 +24,7 @@ def default_route():
 #The GET method for webhook should be used for the CRC check
 #TODO: add header validation (compare_digest https://docs.python.org/3.6/library/hmac.html)
 @app.route("/webhook", methods=["GET"])
-def twitterCrcValidation():
+def twitter_crc_validation():
 
     crc = request.args['crc_token']
 
@@ -37,7 +44,7 @@ def twitterCrcValidation():
 #The POST method for webhook should be used for all other API events
 #TODO: add event-specific behaviours beyond Direct Message and Like
 @app.route("/webhook", methods=["POST"])
-def twitterEventReceived():
+def twitter_event_received():
 
     requestJson = request.get_json()
 
@@ -81,7 +88,7 @@ def twitterEventReceived():
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 65010.
     port = int(os.environ.get('PORT', 65010))
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+    # gunicorn_logger = logging.getLogger('gunicorn.error')
+    # app.logger.handlers = gunicorn_logger.handlers
+    # app.logger.setLevel(gunicorn_logger.level)
     app.run(host='0.0.0.0', port=port, debug=True)
