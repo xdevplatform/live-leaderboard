@@ -48,13 +48,8 @@ def event_manager():
         print("Someone liked a Tweet")
 
         return "200"
-    elif request.json['direct_message_events']:
-        direct_message_event = request.json['direct_message_events']
-        print(direct_message_event)
-
-        return "200"
     else:
-        return "200"        
+        return "200"      
 
 
 #The POST method for webhook should be used for all other API events
