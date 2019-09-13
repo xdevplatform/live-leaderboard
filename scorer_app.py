@@ -19,6 +19,13 @@ app = Flask(__name__)
 #generic index route    
 @app.route('/')
 def default_route():
+    '''Default route'''
+    app.logger.debug(‘this is a DEBUG message’)
+    app.logger.info(‘this is an INFO message’)
+    app.logger.warning(‘this is a WARNING message’)
+    app.logger.error(‘this is an ERROR message’)
+    app.logger.critical(‘this is a CRITICAL message’)
+
     return "Hello world"
 
 # The GET method for webhook should be used for the CRC check
@@ -43,7 +50,7 @@ def twitter_crc_validation():
 @app.route("/webhook", methods=["POST"])
 def event_manager():
     if request.json['favorite_events']:
-        print("Someone liked a Tweet")
+        app.logger.info("Someone liked a Tweet")
     else:
         return "200"
 
@@ -96,7 +103,8 @@ def event_manager():
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 65010.
     port = int(os.environ.get('PORT', 65010))
-    # gunicorn_logger = logging.getLogger('gunicorn.error')
-    # app.logger.handlers = gunicorn_logger.handlers
-    # app.logger.setLevel(gunicorn_logger.level)
+    # Logger code
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
     app.run(host='0.0.0.0', port=port, debug=True)
