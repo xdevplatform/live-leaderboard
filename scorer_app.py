@@ -11,12 +11,17 @@ import os
 
 import twitter
 
-CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None)
-CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None)
+#Gonna be sending Tweets and DMs.
+CONSUMER_KEY = os.environ.get('CONSUMER_KEY', None)
+CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None) #Also needed for CRC.
+ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN', None)
+ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET', None)
+
+#CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None) #May be needed?
 
 app = Flask(__name__)
 
-#generic index route    
+#generic index route
 @app.route('/')
 def default_route():
     return "Hello world"
@@ -43,13 +48,19 @@ def twitter_crc_validation():
 # Event manager block
 @app.route("/webhook", methods=["POST"])
 def event_manager():
-    if request.json['favorite_events']:
-        app.logger.info("Someone liked a Tweet")
-        print("Someone liked a Tweet")
 
-        return "200"
-    else:
-        return "200"      
+    if 'direct_message_indicate_typing_events' in request.json:
+        pass
+    elif 'direct_message_events' in request.json:
+        from_user_id = request.json['direct_message_events'][0]['message_create']['sender_id']
+        message = request.json['direct_message_events'][0]['message_create']['message_data']['text']
+        print (f"Received a Direct Message from {from_user_id} with message: {message}")
+    elif 'favorite_events' in request.json:
+        pass
+
+
+
+    return "200"
 
 
 #The POST method for webhook should be used for all other API events
@@ -98,8 +109,8 @@ def event_manager():
 
 
 if __name__ == '__main__':
-    # Bind to PORT if defined, otherwise default to 65010.
-    port = int(os.environ.get('PORT', 65010))
+    # Bind to PORT if defined, otherwise default to 5000.
+    port = int(os.environ.get('PORT', 5000))
     # Logger code
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers = gunicorn_logger.handlers
