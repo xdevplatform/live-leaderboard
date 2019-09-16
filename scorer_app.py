@@ -19,6 +19,15 @@ ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET', None)
 
 #CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None) #May be needed?
 
+
+def handle_dm(dm):
+
+    from_user_id = dm['direct_message_events'][0]['message_create']['sender_id']
+    message = dm['direct_message_events'][0]['message_create']['message_data']['text']
+    print (f"Received a Direct Message from {from_user_id} with message: {message}")
+    pass
+
+
 app = Flask(__name__)
 
 #generic index route
@@ -52,13 +61,14 @@ def event_manager():
     if 'direct_message_indicate_typing_events' in request.json:
         pass
     elif 'direct_message_events' in request.json:
-        from_user_id = request.json['direct_message_events'][0]['message_create']['sender_id']
-        message = request.json['direct_message_events'][0]['message_create']['message_data']['text']
-        print (f"Received a Direct Message from {from_user_id} with message: {message}")
-    elif 'favorite_events' in request.json:
+        handle_dm(request.json)
+    elif 'tweet_create_events' in request.json:
+        #Need to look at Tweet payload's User to know if host account created Tweet?
+        #Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
         pass
 
-
+    elif 'favorite_events' in request.json:
+        pass
 
     return "200"
 
