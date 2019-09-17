@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from flask import Flask, request, send_from_directory, make_response
-from http import HTTPStatus
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
 
 import base64
 import hashlib
@@ -9,6 +10,14 @@ import logging
 import json
 import os
 import tweepy
+
+app = Flask(__name__)
+# database code code
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/scores'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
 
 #Gonna be sending Tweets and DMs.
 CONSUMER_KEY = os.environ.get('CONSUMER_KEY', None)
@@ -58,8 +67,6 @@ def handle_dm(dm):
         handle_score(message)
 
         send_direct_message(from_user_id, response)
-
-app = Flask(__name__)
 
 #generic index route
 @app.route('/')
