@@ -8,8 +8,7 @@ import hmac
 import logging
 import json
 import os
-
-import twitter
+import tweepy
 
 #Gonna be sending Tweets and DMs.
 CONSUMER_KEY = os.environ.get('CONSUMER_KEY', None)
@@ -17,16 +16,48 @@ CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None) #Also needed for CRC.
 ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN', None)
 ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET', None)
 
+auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+api = tweepy.API(auth)
+
 #CURRENT_USER_ID = os.environ.get('CURRENT_USER_ID', None) #May be needed?
 
+
+def get_pars():
+    pars = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
+    return pars
+
+def get_team_scorers():
+    scorers = ['arisirenita', 'lindspanther', 'evanr', 'happycamper', 'BoomerMurray', 'ThomasMac_IV', 'kennykhlee', \
+               'robdehuff', 'kathleenso', 'noahwinter13', 'traviszachary', 'snowman', 'ericmartinyc', 'johnd', 'gmax', \
+               'maeloveholt', 'jpodnos']
+    return scorers
+
+def send_tweet(message, media_id = None):
+    api.update_status(message, media_id=media_id)
+
+def send_direct_message(recipient_id, message):
+    api.send_direct_message(recipient_id, message)
+
+def handle_score(message):
+    #Parse and store score
+    pass
 
 def handle_dm(dm):
 
     from_user_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
     print (f"Received a Direct Message from {from_user_id} with message: {message}")
-    pass
 
+    #Look for markers that this is a score (#t #h #s).
+    if '#n' in message and '#h' in message and '#s' in message:
+        #We have a score
+        response = 'Thanks for submitting your score.'
+
+        #Store score and Tweet out current standings.
+        handle_score(message)
+
+        send_direct_message(from_user_id, response)
 
 app = Flask(__name__)
 
@@ -71,52 +102,6 @@ def event_manager():
         pass
 
     return "200"
-
-
-#The POST method for webhook should be used for all other API events
-#TODO: add event-specific behaviours beyond Direct Message and Like
-
-# @app.route("/webhook", methods=["POST"])
-# def twitter_event_received():
-
-#     requestJson = request.get_json()
-
-#     #dump to console for debugging purposes
-#     print(json.dumps(requestJson, indent=4, sort_keys=True))
-
-#     if 'favorite_events' in requestJson.keys():
-#         #Tweet Favourite Event, process that
-#         likeObject = requestJson['favorite_events'][0]
-#         userId = likeObject.get('user', {}).get('id')
-
-#         #event is from myself so ignore (Favourite event fires when you send a DM too)   
-#         if userId == CURRENT_USER_ID:
-#             return ('', HTTPStatus.OK)
-
-#         Twitter.processLikeEvent(likeObject)
-
-#     elif 'direct_message_events' in requestJson.keys():
-#         #DM recieved, process that
-#         eventType = requestJson['direct_message_events'][0].get("type")
-#         messageObject = requestJson['direct_message_events'][0].get('message_create', {})
-#         messageSenderId = messageObject.get('sender_id')
-
-#         #event type isnt new message so ignore
-#         if eventType != 'message_create':
-#             return ('', HTTPStatus.OK)
-
-#         #message is from myself so ignore (Message create fires when you send a DM too)   
-#         if messageSenderId == CURRENT_USER_ID:
-#             return ('', HTTPStatus.OK)
-
-#         Twitter.processDirectMessageEvent(messageObject)
-
-#     else:
-#         #Event type not supported
-#         return ('', HTTPStatus.OK)
-
-#     return ('', HTTPStatus.OK)
-
 
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 5000.
