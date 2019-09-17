@@ -50,7 +50,7 @@ def handle_dm(dm):
     print (f"Received a Direct Message from {from_user_id} with message: {message}")
 
     #Look for markers that this is a score (#t #h #s).
-    if '#n' in message and '#h' in message and '#s' in message:
+    if '#t' in message and '#h' in message and '#s' in message:
         #We have a score
         response = 'Thanks for submitting your score.'
 
