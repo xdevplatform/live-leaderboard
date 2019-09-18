@@ -196,35 +196,36 @@ def is_score(message):
     #Parse score.
     return is_score
 
-#TODO
-def is_leaderboard_command():
+def is_leaderboard_command(message):
     '''Parses DM message to see if it is a command to send DM with leaderboard. '''
     is_leaderboard_command = False
+
+    if 'leaderboard' in message:
+        is_leaderboard_command = True
+
     return is_leaderboard_command
 
-def handle_dm(dm):
+def handle_dm(sender_id, message):
     '''Determines what kind of DM this is.
         * Is this a score being submitted?
         * Is this a command to post the leaderboard?
         * Currently ignoring other DMs.
     '''
 
-    from_user_id = dm['direct_message_events'][0]['message_create']['sender_id']
-    message = dm['direct_message_events'][0]['message_create']['message_data']['text']
-    print (f"Received a Direct Message from {from_user_id} with message: {message}")
+    print (f"Received a Direct Message from {sender_id} with message: {message}")
 
     if is_score(message):
         handle_score(message) #Store score.
         response = "Got it, thanks!"
-        send_direct_message(from_user_id, response)
-    elif is_leaderboard_command():
-        send_leaderboard_tweet() #Tweet out leaderboard.
+        send_direct_message(sender_id, response)
+    elif is_leaderboard_command(message):
+        send_leaderboard_tweet(message) #Tweet out leaderboard.
         response = "OK, gonna Tweet the leaderboard."
-        send_direct_message(from_user_id, response)
+        send_direct_message(sender_id, response)
     else:
         pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
         response = "Sorry, busy keeping score..."
-        send_direct_message(from_user_id, response)
+        send_direct_message(sender_id, response)
 
 
 #=======================================================================================================================
@@ -264,8 +265,15 @@ def event_manager():
     elif 'direct_message_events' in request.json:
         #Ignore DM events from DM we sent.
         sender_id = request.json['direct_message_events'][0]['message_create']['sender_id']
+        message = request.json['direct_message_events'][0]['message_create']['message_data']['text']
+
+        #Do we want to filter on host account/@johnd/@snowman?
         if sender_id != HOST_ACCOUNT_ID:
-            handle_dm(request.json)
+            handle_dm(sender_id, message)
+        else:
+            send_leaderboard_tweet()
+
+
     elif 'tweet_create_events' in request.json:
         #Need to look at Tweet payload's User to know if host account created Tweet?
         #Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
@@ -285,7 +293,31 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
 
 
-#Saved 'callers' for unit testing.
+##Saved 'callers' for unit testing.
 # if __name__ == '__main__':
-#     message = "t6 h18 s6"
-#     handle_score(message)
+#     #Seeding database with data.
+#     handle_score("t1 h1 s4")
+#     handle_score("t2 h2 s4")
+#     handle_score("t3 h3 s4")
+#     handle_score("t4 h4 s4")
+#     handle_score("t5 h5 s4")
+#     handle_score("t6 h6 s4")
+#     handle_score("t7 h7 s4")
+#     handle_score("t8 h8 s4")
+#     handle_score("t9 h9 s4")
+#     handle_score("t10 h10 s4")
+#     handle_score("t18 h18 s4")
+#     handle_score("t1 h2 s4")
+#     handle_score("t2 h3 s4")
+#     handle_score("t3 h4 s4")
+#     handle_score("t1 h3 s4")
+#     handle_score("t2 h4 s4")
+#     handle_score("t3 h5 s4")
+#     handle_score("t18 h1 s4")
+#     handle_score("t18 h2 s4")
+#     handle_score("t18 h3 s4")
+#     handle_score("t18 h4 s4")
+
+
+
+
