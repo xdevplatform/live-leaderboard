@@ -95,7 +95,7 @@ def create_standings():
 
 #TODO
 def get_media_ids():
-    '''Requests media ids from Twitter.'''
+    '''Requests media ids from Twitter. We may be uploadog'''
     ids = []
     return ids
 
@@ -110,6 +110,9 @@ def send_direct_message(recipient_id, message):
 #TODO
 def handle_score(message):
     '''Parses and stores score.'''
+    have_team = False
+    have_hole = False
+    have_score = False
 
     #Parse and store score
     team = -1
@@ -118,20 +121,51 @@ def handle_score(message):
 
     #We have a score, so parse it.
     tokens = message.split(' ')
-    team_item = fnmatch.filter(tokens, '#t ?')
 
+    #TODO: have more patterns to look for? Add them here.
 
+    #Parse team_id.
+    team_token = fnmatch.filter(tokens, 't ?')
+    if len(team_token) == 1:
+        have_team = True
+        team_id = team_token[0].split(' ')[1]
 
+    if not have_team:
+        team_token = fnmatch.filter(tokens, 't ??')
+        if len(team_token) == 1:
+            have_team = True
+            team_id = team_token[0].split(' ')[1]
+
+    #Parse hole.
+    hole_token = fnmatch.filter(tokens, 'h ?')
+    if len(hole_token) == 1:
+        have_hole = True
+        hole = hole_token[0].split(' ')[1]
+
+    if not have_hole:
+        team_token = fnmatch.filter(tokens, 't ??')
+        if len(hole_token) == 1:
+            have_hole = True
+            hole = hole_token[0].split(' ')[1]
+
+    #Parse score.
+    score_token = fnmatch.filter(tokens, 'h ?')
+    if len(score_token) == 1:
+        have_score = True
+        score = score_token[0].split(' ')[1]
+
+    if not have_score:
+        team_token = fnmatch.filter(tokens, 't ??')
+        if len(score_token) == 1:
+            have_score = True
+            score = score_token[0].split(' ')[1]
 
     #Save the score.
     insert_score(team, hole, score)
 
-    #Send submitter the leaderboard via DM?
-        #Generate leaderboard
-        #send_leaderboard_dm()
-
-
-
+    #TODO Send submitter the leaderboard via DM?
+    #Generate leaderboard
+    #send_leaderboard_dm()
 
 #TODO
 def send_leaderboard_tweet():
