@@ -16,6 +16,7 @@ import tweepy
 import fnmatch
 
 #Gonna be sending Tweets and DMs.
+HOST_ACCOUNT_ID = os.environ.get('HOST_ACCOUNT_ID', None)
 CONSUMER_KEY = os.environ.get('CONSUMER_KEY', None)
 CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None) #Also needed for CRC.
 ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN', None)
@@ -45,13 +46,13 @@ def get_team_scorers():
                'maeloveholt', 'jpodnos']
     return scorers
 
-def insert_score(team, hole, score):
+def insert_score(team_id, hole, score):
     ''' Database wrapper for storing scores. '''
 
     #Create database connection.
     con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
     cur = con.cursor()
-    cur.execute(f"INSERT INTO scores (time_stamp,team_id,hole,score) VALUES (NOW(),{team},{hole},{score});")
+    cur.execute(f"INSERT INTO scores (time_stamp,team_id,hole,score) VALUES (NOW(),{team_id},{hole},{score});")
     con.commit()
     con.close()
 
@@ -105,7 +106,7 @@ def upload_media(image_file):
 
 #TODO
 def get_media_ids():
-    '''Requests media ids from Twitter.'''
+    '''Requests media ids from Twitter. We may be uploadog'''
     ids = []
     return ids
 
@@ -120,28 +121,64 @@ def send_direct_message(recipient_id, message):
 #TODO
 def handle_score(message):
     '''Parses and stores score.'''
+    have_team = False
+    have_hole = False
+    have_score = False
 
     #Parse and store score
-    team = -1
+    team_id = -1
     hole = 0
     score = 0
 
     #We have a score, so parse it.
     tokens = message.split(' ')
-    team_item = fnmatch.filter(tokens, '#t ?')
 
+    #TODO: have more patterns to look for? Add them here.
 
+    #Parse team_id.
 
+    team_token = fnmatch.filter(tokens, 't?')
+    if len(team_token) == 1:
+        have_team = True
+        team_id = team_token[0][1:]
+
+    if not have_team:
+        team_token = fnmatch.filter(tokens, 't??')
+        if len(team_token) == 1:
+            have_team = True
+            team_id = team_token[0][1:]
+
+    #Parse hole.
+    hole_token = fnmatch.filter(tokens, 'h?')
+    if len(hole_token) == 1:
+        have_hole = True
+        hole = hole_token[0][1:]
+
+    if not have_hole:
+        hole_token = fnmatch.filter(tokens, 'h??')
+        if len(hole_token) == 1:
+            have_hole = True
+            hole = hole_token[0][1:]
+
+    #Parse score.
+    score_token = fnmatch.filter(tokens, 's?')
+    if len(score_token) == 1:
+        have_score = True
+        score = score_token[0][1:]
+
+    if not have_score:
+        score_token = fnmatch.filter(tokens, 's??')
+        if len(score_token) == 1:
+            have_score = True
+            score = score_token[0][1:]
 
     #Save the score.
-    insert_score(team, hole, score)
+    print (f"Inserting for team {team_id}: hole {hole} with score {score} ")
+    insert_score(int(team_id), int(hole), int(score))
 
-    #Send submitter the leaderboard via DM?
-        #Generate leaderboard
-        #send_leaderboard_dm()
-
-
-
+    #TODO Send submitter the leaderboard via DM?
+    #Generate leaderboard
+    #send_leaderboard_dm()
 
 #TODO
 def send_leaderboard_tweet():
@@ -164,9 +201,9 @@ def is_score(message):
     #Look for markers that this is a score (#t #h #s).
     #TODO: what are the patterns that indicate that it is a score.
 
-    if '#t' in message and '#h' in message and '#s' in message:
+    if 't' in message and 'h' in message and 's' in message: #TODO harden with pattern matching t?, t??, etc.
         is_score = True
-    #elif 't' in message and 'h' in message and 's' in message:
+    #elif 't' in message and 'h' in message and 's' in message: #TODO
     #    pass
 
 
@@ -185,29 +222,28 @@ def is_leaderboard_command(message):
 
     return is_leaderboard_command
 
-def handle_dm(dm):
+def handle_dm(sender_id, message):
     '''Determines what kind of DM this is.
         * Is this a score being submitted?
         * Is this a command to post the leaderboard?
         * Currently ignoring other DMs.
     '''
 
-    from_user_id = dm['direct_message_events'][0]['message_create']['sender_id']
-    message = dm['direct_message_events'][0]['message_create']['message_data']['text']
-    print (f"Received a Direct Message from {from_user_id} with message: {message}")
+    print (f"Received a Direct Message from {sender_id} with message: {message}")
 
     if is_score(message):
         handle_score(message) #Store score.
         response = "Got it, thanks!"
         send_direct_message(from_user_id, response)
+        send_direct_message(sender_id, response)
     elif is_leaderboard_command(message):
-        send_leaderboard_tweet() #Tweet out leaderboard.
+        send_leaderboard_tweet(message) #Tweet out leaderboard.
         response = "OK, gonna Tweet the leaderboard."
-        send_direct_message(from_user_id, response)
+        send_direct_message(sender_id, response)
     else:
         pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
         response = "Sorry, busy keeping score..."
-        send_direct_message(from_user_id, response)
+        send_direct_message(sender_id, response)
 
 
 #=======================================================================================================================
@@ -245,7 +281,17 @@ def event_manager():
     if 'direct_message_indicate_typing_events' in request.json:
         pass #Ignoring these by design...
     elif 'direct_message_events' in request.json:
-        handle_dm(request.json)
+        #Ignore DM events from DM we sent.
+        sender_id = request.json['direct_message_events'][0]['message_create']['sender_id']
+        message = request.json['direct_message_events'][0]['message_create']['message_data']['text']
+
+        #Do we want to filter on host account/@johnd/@snowman?
+        if sender_id != HOST_ACCOUNT_ID:
+            handle_dm(sender_id, message)
+        else:
+            send_leaderboard_tweet()
+
+
     elif 'tweet_create_events' in request.json:
         #Need to look at Tweet payload's User to know if host account created Tweet?
         #Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
@@ -263,4 +309,33 @@ if __name__ == '__main__':
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
     app.run(host='0.0.0.0', port=port, debug=True)
+
+
+##Saved 'callers' for unit testing.
+# if __name__ == '__main__':
+#     #Seeding database with data.
+#     handle_score("t1 h1 s4")
+#     handle_score("t2 h2 s4")
+#     handle_score("t3 h3 s4")
+#     handle_score("t4 h4 s4")
+#     handle_score("t5 h5 s4")
+#     handle_score("t6 h6 s4")
+#     handle_score("t7 h7 s4")
+#     handle_score("t8 h8 s4")
+#     handle_score("t9 h9 s4")
+#     handle_score("t10 h10 s4")
+#     handle_score("t18 h18 s4")
+#     handle_score("t1 h2 s4")
+#     handle_score("t2 h3 s4")
+#     handle_score("t3 h4 s4")
+#     handle_score("t1 h3 s4")
+#     handle_score("t2 h4 s4")
+#     handle_score("t3 h5 s4")
+#     handle_score("t18 h1 s4")
+#     handle_score("t18 h2 s4")
+#     handle_score("t18 h3 s4")
+#     handle_score("t18 h4 s4")
+
+
+
 
