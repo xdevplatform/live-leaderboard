@@ -93,6 +93,16 @@ def create_standings():
 
     return image
 
+# JD: Added this so we can Tweet with media
+# Would take generated image from above method and upload to Twitter, return media_id
+def upload_media(image_file):
+    res = api.media_upload(image_file)
+    media_ids = []
+    # Add returned media_id to array
+    media_ids.append(res.media_id)
+
+    return media_ids
+
 #TODO
 def get_media_ids():
     '''Requests media ids from Twitter.'''
@@ -135,7 +145,11 @@ def handle_score(message):
 
 #TODO
 def send_leaderboard_tweet():
-    pass
+    test_image = "scorecard.jpeg"
+    media_id = upload_media(test_image)
+    message = "Here's the leaderboad:"
+
+    api.update_status(status=message, media_ids=media_id)
 
 #TODO
 def send_leaderboard_dm():
@@ -160,9 +174,15 @@ def is_score(message):
     return is_score
 
 #TODO
-def is_leaderboard_command():
-    '''Parses DM message to see if it is a command to send DM with leaderboard. '''
-    is_leaderboard_command = False
+def is_leaderboard_command(message):
+    '''Parses DM message to see if it is a command to send DM with leaderboard.'''
+
+    is_leaderboard_command = False # Default
+
+    # Look for the word "Leaderboard" in DM text
+    if 'Leaderboard' in message or 'leaderboard' in message:
+        is_leaderboard_command = True
+
     return is_leaderboard_command
 
 def handle_dm(dm):
@@ -180,7 +200,7 @@ def handle_dm(dm):
         handle_score(message) #Store score.
         response = "Got it, thanks!"
         send_direct_message(from_user_id, response)
-    elif is_leaderboard_command():
+    elif is_leaderboard_command(message):
         send_leaderboard_tweet() #Tweet out leaderboard.
         response = "OK, gonna Tweet the leaderboard."
         send_direct_message(from_user_id, response)

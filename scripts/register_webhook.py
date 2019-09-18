@@ -8,35 +8,25 @@ from dotenv import load_dotenv
 load_dotenv(verbose=True)  # Throws error if it can't find .env file
 
 # Retrieves and stores credential information from the '.env' file
-CONSUMER_KEY = os.getenv("TWITTER_CONSUMER_KEY")
-CONSUMER_SECRET = os.getenv("TWITTER_CONSUMER_SECRET")
-ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
-TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+CONSUMER_KEY = os.getenv("CONSUMER_KEY")
+CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 
 # Generate user context auth (OAuth1)
 user_context_auth = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_SECRET)
 
-# Assign the resource and webhook urls
-resource_url = "https://api.twitter.com/1.1/account_activity/all/dev/webhooks.json"
+# Specify which env you want register ('prod' or 'dev')
+env_name = "prod"
 
-url_dict = {'url': 'https://hacker-scorer.herokuapp.com/webhook'}
+# Assign the resource url
+resource_url = f"https://api.twitter.com/1.1/account_activity/all/{env_name}/webhooks.json"
+
+# Provide the web app URL that you want to register as the webhook
+url_dict = {"url": "https://49809330.ngrok.io/webhook"}
 
 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
 
 response = requests.post(resource_url, auth=user_context_auth, headers=headers, params=url_dict)
 print(response.status_code, response.text)
-
-# def register_webhook(webhook_url):
-# 	# Generate user context auth (OAuth1)
-# 	user_context_auth = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_SECRET)
-# 	try:
-# 		response = requests.post(resource_url, auth=user_context_auth, params=webhook_url)
-# 	except requests.exceptions.RequestException as e:
-# 		print(e)
-# 		sys.exit(120)
-
-# 	print(response.status_code, response.text)
-
-# Call the register_webhook function
-# register_webhook(my_webhook_url)
