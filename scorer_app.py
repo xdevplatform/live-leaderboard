@@ -61,11 +61,6 @@ def insert_score(team_id, hole, score):
 def get_scores():
     '''Database wrpper for retrieving ALL scores.'''
 
-    DATABASE="dce7q202rl13nm"
-    DATABASE_HOST="ec2-107-20-243-220.compute-1.amazonaws.com"
-    DATABASE_USER="ijjdchmahpzskl"
-    DATABASE_PASSWORD="aa8a1e32fab2660fedfb44f2d145c98c8bb063b027402323f426a735bddfbc6f"
-
     #Create database connection.
     sql = "SELECT * FROM scores;"
     con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
