@@ -5,6 +5,8 @@ import psycopg2
 import numpy as np
 import pandas as pd
 import pandas.io.sql as psql
+import matplotlib.pylab as plt
+from pandas.plotting import table
 
 import base64
 import hashlib
@@ -59,16 +61,22 @@ def insert_score(team_id, hole, score):
 def get_scores():
     '''Database wrpper for retrieving ALL scores.'''
 
-    scores = []
+    DATABASE="dce7q202rl13nm"
+    DATABASE_HOST="ec2-107-20-243-220.compute-1.amazonaws.com"
+    DATABASE_USER="ijjdchmahpzskl"
+    DATABASE_PASSWORD="aa8a1e32fab2660fedfb44f2d145c98c8bb063b027402323f426a735bddfbc6f"
 
     #Create database connection.
+    sql = "SELECT * FROM scores;"
     con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
-    cur = con.cursor()
-    cur.execute("SELECT * FROM scores;")
-    scores = cur.fetchall()
+    #Load recordset into dataframe.
+    scores_df = psql.read_sql_query(sql, con)
+
+    #cur.execute("SELECT * FROM scores;")
+    #scores = cur.fetchall()
     con.close()
 
-    return scores
+    return scores_df
 
 def create_standings():
     '''This function does the work of building a leaderboard. Recipe:
@@ -77,25 +85,33 @@ def create_standings():
         * Do some sorting.
         * Do some calculating. Like looking up par ratings and determining over/even/under.
         * Generate image of dataframe.
-        * Return image.
+        * Write image to ./img folder.
 
     '''
-
-    scores = []
-    image = object #TODO: not sure how to generate a PNG file.
-
     #Retrieve scores.
-    scores = get_scores
-    #Load into dataframe.
+    scores_df = get_scores()
 
-    #Sort and calculate.
+    #Sort and calculate. TODO
 
     #Generate image.
+    # set fig size
+    fig, ax = plt.subplots(figsize=(12, 3))
+    # no axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    # no frame
+    ax.set_frame_on(False)
+    # plot table
+    tab = table(ax, scores_df, loc='upper right')
+    # set font manually
+    tab.auto_set_font_size(False)
+    tab.set_fontsize(8)
+    # save the result
+    if not os.path.exists('./img'):
+        os.makedirs('./img')
+    plt.savefig('./img/scores.png')
 
-    return image
-
-# JD: Added this so we can Tweet with media
-# Would take generated image from above method and upload to Twitter, return media_id
+# Takes generated image from above method and upload to Twitter, return media_id.
 def upload_media(image_file):
     res = api.media_upload(image_file)
     media_ids = []
@@ -182,7 +198,7 @@ def handle_score(message):
 
 #TODO
 def send_leaderboard_tweet():
-    test_image = "scorecard.jpeg"
+    test_image = "scorecard.png"
     media_id = upload_media(test_image)
     message = "Here's the leaderboad:"
 
@@ -190,6 +206,9 @@ def send_leaderboard_tweet():
 
 #TODO
 def send_leaderboard_dm():
+    pass
+
+def generate_leaderboard():
     pass
 
 #TODO
@@ -222,29 +241,39 @@ def is_leaderboard_command(message):
 
     return is_leaderboard_command
 
-def handle_dm(sender_id, message):
+def handle_dm(dm):
     '''Determines what kind of DM this is.
         * Is this a score being submitted?
         * Is this a command to post the leaderboard?
         * Currently ignoring other DMs.
     '''
 
-    print (f"Received a Direct Message from {sender_id} with message: {message}")
+    print (f"Received a Direct Message from {sender_id} with message: {message}") #TODO: tweepy to get handle.
 
-    if is_score(message):
-        handle_score(message) #Store score.
-        response = "Got it, thanks!"
-        send_direct_message(from_user_id, response)
-        send_direct_message(sender_id, response)
-    elif is_leaderboard_command(message):
-        send_leaderboard_tweet(message) #Tweet out leaderboard.
-        response = "OK, gonna Tweet the leaderboard."
-        send_direct_message(sender_id, response)
-    else:
-        pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
-        response = "Sorry, busy keeping score..."
-        send_direct_message(sender_id, response)
+    #Ignore DM events from DM we sent.
+    sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
+    message = dm['direct_message_events'][0]['message_create']['message_data']['text']
 
+    if sender_id == HOST_ACCOUNT_ID: #Then special handling.
+        if is_leaderboard_command(message):
+            send_leaderboard_tweet() #Tweet out leaderboard.
+            response = "OK, gonna Tweet the leaderboard."
+            send_direct_message(sender_id, response)
+        else:
+            pass #Ignoring by design.
+    elif sender_id != HOST_ACCOUNT_ID:
+        if is_score(message):
+            handle_score(message) #Store score.
+            response = "Got it, thanks!"
+            send_direct_message(sender_id, response)
+        elif is_leaderboard_command(message):
+            send_leaderboard_tweet() #Tweet out leaderboard.
+            response = "OK, gonna Tweet the leaderboard."
+            send_direct_message(sender_id, response)
+        else:
+            pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
+            response = "Sorry, busy keeping score..."
+            send_direct_message(sender_id, response)
 
 #=======================================================================================================================
 app = Flask(__name__)
@@ -281,17 +310,7 @@ def event_manager():
     if 'direct_message_indicate_typing_events' in request.json:
         pass #Ignoring these by design...
     elif 'direct_message_events' in request.json:
-        #Ignore DM events from DM we sent.
-        sender_id = request.json['direct_message_events'][0]['message_create']['sender_id']
-        message = request.json['direct_message_events'][0]['message_create']['message_data']['text']
-
-        #Do we want to filter on host account/@johnd/@snowman?
-        if sender_id != HOST_ACCOUNT_ID:
-            handle_dm(sender_id, message)
-        else:
-            send_leaderboard_tweet()
-
-
+        handle_dm(request.json)
     elif 'tweet_create_events' in request.json:
         #Need to look at Tweet payload's User to know if host account created Tweet?
         #Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
@@ -312,7 +331,8 @@ if __name__ == '__main__':
 
 
 ##Saved 'callers' for unit testing.
-# if __name__ == '__main__':
+#if __name__ == '__main__':
+#    create_standings()
 #     #Seeding database with data.
 #     handle_score("t1 h1 s4")
 #     handle_score("t2 h2 s4")
@@ -335,6 +355,8 @@ if __name__ == '__main__':
 #     handle_score("t18 h2 s4")
 #     handle_score("t18 h3 s4")
 #     handle_score("t18 h4 s4")
+
+
 
 
 
