@@ -33,10 +33,7 @@ auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
 
-def get_pars():
-    '''Quick and dirty way to store each hole's par rating.'''
-    pars = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
-    return pars
+PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
 
 def get_team_scorers():
     '''
@@ -48,23 +45,22 @@ def get_team_scorers():
                'maeloveholt', 'jpodnos']
     return scorers
 
-def insert_score(team_id, hole, score):
+def insert_score(team_id, hole, score, over_under):
     ''' Database wrapper for storing scores. '''
 
-    #Create database connection.
-    con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
-    cur = con.cursor()
-    cur.execute(f"INSERT INTO scores (time_stamp,team_id,hole,score) VALUES (NOW(),{team_id},{hole},{score});")
-    con.commit()
+    try:
+        #Create database connection.
+        con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
+        cur = con.cursor()
+        cur.execute(f"INSERT INTO scores (time_stamp,team_id,hole,score, over_under) VALUES (NOW(),{team_id},{hole},{score}, {over_under});")
+        con.commit()
+    except:
+        print ("Error on INSERT, assuming duplicate!")
+
     con.close()
 
 def get_scores():
     '''Database wrpper for retrieving ALL scores.'''
-
-    DATABASE="dce7q202rl13nm"
-    DATABASE_HOST="ec2-107-20-243-220.compute-1.amazonaws.com"
-    DATABASE_USER="ijjdchmahpzskl"
-    DATABASE_PASSWORD="aa8a1e32fab2660fedfb44f2d145c98c8bb063b027402323f426a735bddfbc6f"
 
     #Create database connection.
     sql = "SELECT * FROM scores;"
@@ -90,6 +86,13 @@ def create_standings():
     '''
     #Retrieve scores.
     scores_df = get_scores()
+    scores_df.columns = ["team_id", "team_name", "hole", "score", "time_stamp"]
+
+    print (scores_df)
+
+    for row in scores_df.iterrows():
+        if row['team_id'] == 1:
+            print ('team 1')
 
     #Sort and calculate. TODO
 
@@ -134,7 +137,10 @@ def send_tweet(message, media_id = None):
 def send_direct_message(recipient_id, message):
     api.send_direct_message(recipient_id, message)
 
-#TODO
+def get_over_under(hole, score):
+    par = PARS[(int(hole)-1)]
+    return int(score) - par
+
 def handle_score(message):
     '''Parses and stores score.'''
     have_team = False
@@ -190,7 +196,10 @@ def handle_score(message):
 
     #Save the score.
     print (f"Inserting for team {team_id}: hole {hole} with score {score} ")
-    insert_score(int(team_id), int(hole), int(score))
+
+    over_under = get_over_under(hole, score)
+
+    insert_score(int(team_id), int(hole), int(score), int(over_under))
 
     #TODO Send submitter the leaderboard via DM?
     #Generate leaderboard
@@ -320,41 +329,78 @@ def event_manager():
 
     return "200"
 
-if __name__ == '__main__':
-    # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.environ.get('PORT', 5000))
-    # Logger code
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
-    app.run(host='0.0.0.0', port=port, debug=True)
+# if __name__ == '__main__':
+#     # Bind to PORT if defined, otherwise default to 5000.
+#     port = int(os.environ.get('PORT', 5000))
+#     # Logger code
+#     gunicorn_logger = logging.getLogger('gunicorn.error')
+#     app.logger.handlers = gunicorn_logger.handlers
+#     app.logger.setLevel(gunicorn_logger.level)
+#     app.run(host='0.0.0.0', port=port, debug=True)
 
 
 ##Saved 'callers' for unit testing.
-#if __name__ == '__main__':
-#    create_standings()
-#     #Seeding database with data.
-#     handle_score("t1 h1 s4")
-#     handle_score("t2 h2 s4")
-#     handle_score("t3 h3 s4")
-#     handle_score("t4 h4 s4")
-#     handle_score("t5 h5 s4")
-#     handle_score("t6 h6 s4")
-#     handle_score("t7 h7 s4")
-#     handle_score("t8 h8 s4")
-#     handle_score("t9 h9 s4")
-#     handle_score("t10 h10 s4")
-#     handle_score("t18 h18 s4")
-#     handle_score("t1 h2 s4")
-#     handle_score("t2 h3 s4")
-#     handle_score("t3 h4 s4")
-#     handle_score("t1 h3 s4")
-#     handle_score("t2 h4 s4")
-#     handle_score("t3 h5 s4")
-#     handle_score("t18 h1 s4")
-#     handle_score("t18 h2 s4")
-#     handle_score("t18 h3 s4")
-#     handle_score("t18 h4 s4")
+if __name__ == '__main__':
+
+    #print (get_over_under(1,6))
+
+    #create_standings()
+#   #Seeding database with data.  handle_score("t h s5")
+    handle_score("t1 h1 s4")
+    handle_score("t1 h2 s4")
+    handle_score("t1 h3 s4")
+
+    handle_score("t2 h2 s4")
+    handle_score("t2 h3 s4")
+    handle_score("t2 h4 s4")
+
+    handle_score("t3 h3 s4")
+    handle_score("t3 h4 s4")
+    handle_score("t3 h5 s4")
+    handle_score("t3 h6 s4")
+    handle_score("t3 h7 s5")
+    handle_score("t3 h8 s5")
+
+    handle_score("t4 h4 s4")
+    handle_score("t4 h5 s5")
+    handle_score("t4 h6 s5")
+    handle_score("t4 h7 s8")
+    handle_score("t4 h8 s5")
+
+    handle_score("t5 h5 s4")
+    handle_score("t5 h6 s5")
+    handle_score("t5 h7 s5")
+    handle_score("t5 h8 s5")
+    handle_score("t5 h9 s8")
+
+    handle_score("t6 h6 s4")
+    handle_score("t6 h7 s5")
+    handle_score("t6 h8 s6")
+    handle_score("t6 h9 s6")
+    handle_score("t6 h10 s6")
+
+    handle_score("t7 h7 s4")
+    handle_score("t7 h8 s5")
+    handle_score("t7 h9 s5")
+
+
+    handle_score("t8 h8 s4")
+    handle_score("t8 h9 s5")
+    handle_score("t8 h10 s5")
+
+    handle_score("t9 h9 s4")
+    handle_score("t9 h10 s5")
+    handle_score("t9 h11 s5")
+
+    handle_score("t10 h10 s4")
+    handle_score("t10 h11 s5")
+    handle_score("t10 h12 s5")
+
+    handle_score("t18 h18 s4")
+    handle_score("t18 h1 s4")
+    handle_score("t18 h2 s6")
+    handle_score("t18 h3 s7")
+    handle_score("t18 h4 s6")
 
 
 
