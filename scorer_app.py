@@ -111,7 +111,7 @@ def create_standings_image(df):
 
     #Generate image.
     # set fig size
-    fig, ax = plt.subplots(figsize=(12, 3))
+    fig, ax = plt.subplots(figsize=(12, 6))
     # no axes
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
@@ -192,7 +192,7 @@ def create_standings():
 
     print (df_sorted)
 
-    create_standings_image(df_standings)
+    create_standings_image(df_sorted)
 
 
 # Takes generated image from above method and upload to Twitter, return media_id.
@@ -402,14 +402,14 @@ def event_manager():
 
     return "200"
 
-# if __name__ == '__main__':
-#     # Bind to PORT if defined, otherwise default to 5000.
-#     port = int(os.getenv('PORT', 5000))
-#     # Logger code
-#     gunicorn_logger = logging.getLogger('gunicorn.error')
-#     app.logger.handlers = gunicorn_logger.handlers
-#     app.logger.setLevel(gunicorn_logger.level)
-#     app.run(host='0.0.0.0', port=port, debug=True)
+if __name__ == '__main__':
+    # Bind to PORT if defined, otherwise default to 5000.
+    port = int(os.getenv('PORT', 5000))
+    # Logger code
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
 ##Saved 'callers' for unit testing.
@@ -417,7 +417,7 @@ if __name__ == '__main__':
 
     #print (get_over_under(1,6))
 
-    create_standings()
+#    create_standings()
 
 #   #Seeding database with data.  handle_score("t h s5")
 #     handle_score("t1 h1 s4")
