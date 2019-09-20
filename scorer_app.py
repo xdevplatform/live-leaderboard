@@ -7,6 +7,8 @@ import pandas as pd
 import pandas.io.sql as psql
 import matplotlib.pylab as plt
 from pandas.plotting import table
+from dotenv import load_dotenv
+load_dotenv(verbose=True)  # Throws error if it can't find .env file
 
 import base64
 import hashlib
@@ -18,15 +20,15 @@ import tweepy
 import fnmatch
 
 #Gonna be sending Tweets and DMs.
-HOST_ACCOUNT_ID = os.environ.get('HOST_ACCOUNT_ID', None)
-CONSUMER_KEY = os.environ.get('CONSUMER_KEY', None)
-CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET', None) #Also needed for CRC.
-ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN', None)
-ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET', None)
-DATABASE = os.environ.get('DATABASE', None)
-DATABASE_HOST = os.environ.get('DATABASE_HOST', None)
-DATABASE_USER = os.environ.get('DATABASE_USER', None)
-DATABASE_PASSWORD = os.environ.get('DATABASE_PASSWORD', None)
+HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
+CONSUMER_KEY = os.getenv('CONSUMER_KEY', None)
+CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', None) #Also needed for CRC.
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
+ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET', None)
+DATABASE = os.getenv('DATABASE', None)
+DATABASE_HOST = os.getenv('DATABASE_HOST', None)
+DATABASE_USER = os.getenv('DATABASE_USER', None)
+DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', None)
 
 #Set up tweepy client for sending Tweets and DMs.
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -40,6 +42,7 @@ def get_team_scorers():
     Current list of 'scorers' (folks who gotta know how to run this app.). Note that this list's indices tell us the team number).
     We know who is reporting so we do nothave to require team id or name.
     '''
+    #TODO if we use this and the order matters, these need to be updated to reflect new team order.
     scorers = ['arisirenita', 'lindspanther', 'evanr', 'happycamper', 'BoomerMurray', 'ThomasMac_IV', 'kennykhlee', \
                'robdehuff', 'kathleenso', 'noahwinter13', 'traviszachary', 'snowman', 'ericmartinyc', 'johnd', 'gmax', \
                'maeloveholt', 'jpodnos']
@@ -59,6 +62,10 @@ def insert_score(team_id, hole, score, over_under):
 
     con.close()
 
+def get_over_under(hole, score):
+    par = PARS[(int(hole)-1)]
+    return int(score) - par
+
 def get_scores():
     '''Database wrpper for retrieving ALL scores.'''
 
@@ -74,6 +81,62 @@ def get_scores():
 
     return scores_df
 
+def create_standings_image(df):
+
+
+
+    # Set CSS properties for th elements in dataframe
+    th_props = [
+        ('font-size', '11px'),
+        ('text-align', 'center'),
+        ('font-weight', 'bold'),
+        ('color', '#6d6d6d'),
+        ('background-color', '#f7f7f9')
+    ]
+
+    # Set CSS properties for td elements in dataframe
+    td_props = [
+        ('font-size', '11px')
+    ]
+
+    # Set table styles
+    styles = [
+        dict(selector="th", props=th_props),
+        dict(selector="td", props=td_props)
+    ]
+
+
+    df.style.set_table_styles(styles)
+
+
+    #Generate image.
+    # set fig size
+    fig, ax = plt.subplots(figsize=(12, 3))
+    # no axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    # no frame
+    ax.set_frame_on(False)
+    # plot table
+    tab = table(ax, df, loc='upper right')
+    # set font manually
+    tab.auto_set_font_size(False)
+    tab.set_fontsize(9)
+    # save the result
+    if not os.path.exists('./img'):
+        os.makedirs('./img')
+    plt.savefig('./img/scores.png')
+
+def get_last_hole(team, holes_completed):
+    #Important note: team number indicates the hole that the team started on.
+
+    last_hole = team + holes_completed -1
+
+    if last_hole > 18:
+        last_hole = last_hole - 18
+
+    return last_hole
+
 def create_standings():
     '''This function does the work of building a leaderboard. Recipe:
         * Retrieve scores.
@@ -86,33 +149,51 @@ def create_standings():
     '''
     #Retrieve scores.
     scores_df = get_scores()
-    scores_df.columns = ["team_id", "team_name", "hole", "score", "time_stamp"]
+    scores_df.columns = ["team_id", "team_name", "hole", "score", "time_stamp", "over_under"]
+    #Drop columns that are not currently needed in standings.
+    scores_df.drop('team_name', axis=1, inplace=True)
+    scores_df.drop('time_stamp', axis=1, inplace=True)  #TODO - this seems key to pick off more recent completed hole.
 
-    print (scores_df)
+    #print (scores_df)
 
-    for row in scores_df.iterrows():
-        if row['team_id'] == 1:
-            print ('team 1')
+    team_scores = [ [] for i in range(18)]
 
-    #Sort and calculate. TODO
+    #Order of team details in these lists: Team number, total score, over_under, holes_completed, last_hole
 
-    #Generate image.
-    # set fig size
-    fig, ax = plt.subplots(figsize=(12, 3))
-    # no axes
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
-    # no frame
-    ax.set_frame_on(False)
-    # plot table
-    tab = table(ax, scores_df, loc='upper right')
-    # set font manually
-    tab.auto_set_font_size(False)
-    tab.set_fontsize(8)
-    # save the result
-    if not os.path.exists('./img'):
-        os.makedirs('./img')
-    plt.savefig('./img/scores.png')
+    for i in range(18):
+
+        team = i + 1
+        team_scores[i].append(team) #Add team number.
+
+        score = scores_df.loc[scores_df['team_id'] == team, 'score'].sum()
+        over_under = scores_df.loc[scores_df['team_id'] == team, 'over_under'].sum()
+        holes_complete = scores_df.loc[scores_df['team_id'] == team, 'hole'].count()
+        last_hole = get_last_hole(team, holes_complete)
+
+        team_scores[i].append(over_under)
+        team_scores[i].append(score)
+        team_scores[i].append(holes_complete)
+        #team_scores[i].append(last_hole) #Not currently using.
+
+        #print (f"Team {team} has a score of {score} with an over/under of {over_under}")
+
+    print (team_scores)
+
+    #Make dataframe.
+    df_standings = pd.DataFrame(team_scores, columns=['Team','Score','Total','Holes completed'])
+
+    print (df_standings)
+
+    #Sort dataframe
+    df_sorted = df_standings.sort_values(by=['Score', 'Holes completed'], ascending=[True, False])
+
+    df_sorted.set_index('Team', inplace=True)
+
+
+    print (df_sorted)
+
+    create_standings_image(df_standings)
+
 
 # Takes generated image from above method and upload to Twitter, return media_id.
 def upload_media(image_file):
@@ -137,9 +218,6 @@ def send_tweet(message, media_id = None):
 def send_direct_message(recipient_id, message):
     api.send_direct_message(recipient_id, message)
 
-def get_over_under(hole, score):
-    par = PARS[(int(hole)-1)]
-    return int(score) - par
 
 def handle_score(message):
     '''Parses and stores score.'''
@@ -194,10 +272,10 @@ def handle_score(message):
             have_score = True
             score = score_token[0][1:]
 
-    #Save the score.
-    print (f"Inserting for team {team_id}: hole {hole} with score {score} ")
-
     over_under = get_over_under(hole, score)
+
+    #Save the score.
+    print (f"Inserting for team {team_id}: hole {hole} with score {score} with over_under of {over_under}")
 
     insert_score(int(team_id), int(hole), int(score), int(over_under))
 
@@ -217,10 +295,7 @@ def send_leaderboard_tweet():
 def send_leaderboard_dm():
     pass
 
-def generate_leaderboard():
-    pass
-
-#TODO
+#TODO - supporting more formats?
 def is_score(message):
     '''Parses DM message and sees if it is a score.'''
 
@@ -238,14 +313,13 @@ def is_score(message):
     #Parse score.
     return is_score
 
-#TODO
 def is_leaderboard_command(message):
     '''Parses DM message to see if it is a command to send DM with leaderboard.'''
 
     is_leaderboard_command = False # Default
 
     # Look for the word "Leaderboard" in DM text
-    if 'Leaderboard' in message or 'leaderboard' in message:
+    if 'leaderboard' in message.lower():
         is_leaderboard_command = True
 
     return is_leaderboard_command
@@ -259,11 +333,10 @@ def handle_dm(dm):
 
     print (f"Received a Direct Message from {sender_id} with message: {message}") #TODO: tweepy to get handle.
 
-    #Ignore DM events from DM we sent.
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
 
-    if sender_id == HOST_ACCOUNT_ID: #Then special handling.
+    if sender_id == HOST_ACCOUNT_ID: #Then special handling. #Ignore DM events from DM we sent.
         if is_leaderboard_command(message):
             send_leaderboard_tweet() #Tweet out leaderboard.
             response = "OK, gonna Tweet the leaderboard."
@@ -331,7 +404,7 @@ def event_manager():
 
 # if __name__ == '__main__':
 #     # Bind to PORT if defined, otherwise default to 5000.
-#     port = int(os.environ.get('PORT', 5000))
+#     port = int(os.getenv('PORT', 5000))
 #     # Logger code
 #     gunicorn_logger = logging.getLogger('gunicorn.error')
 #     app.logger.handlers = gunicorn_logger.handlers
@@ -344,63 +417,108 @@ if __name__ == '__main__':
 
     #print (get_over_under(1,6))
 
-    #create_standings()
+    create_standings()
+
 #   #Seeding database with data.  handle_score("t h s5")
-    handle_score("t1 h1 s4")
-    handle_score("t1 h2 s4")
-    handle_score("t1 h3 s4")
-
-    handle_score("t2 h2 s4")
-    handle_score("t2 h3 s4")
-    handle_score("t2 h4 s4")
-
-    handle_score("t3 h3 s4")
-    handle_score("t3 h4 s4")
-    handle_score("t3 h5 s4")
-    handle_score("t3 h6 s4")
-    handle_score("t3 h7 s5")
-    handle_score("t3 h8 s5")
-
-    handle_score("t4 h4 s4")
-    handle_score("t4 h5 s5")
-    handle_score("t4 h6 s5")
-    handle_score("t4 h7 s8")
-    handle_score("t4 h8 s5")
-
-    handle_score("t5 h5 s4")
-    handle_score("t5 h6 s5")
-    handle_score("t5 h7 s5")
-    handle_score("t5 h8 s5")
-    handle_score("t5 h9 s8")
-
-    handle_score("t6 h6 s4")
-    handle_score("t6 h7 s5")
-    handle_score("t6 h8 s6")
-    handle_score("t6 h9 s6")
-    handle_score("t6 h10 s6")
-
-    handle_score("t7 h7 s4")
-    handle_score("t7 h8 s5")
-    handle_score("t7 h9 s5")
-
-
-    handle_score("t8 h8 s4")
-    handle_score("t8 h9 s5")
-    handle_score("t8 h10 s5")
-
-    handle_score("t9 h9 s4")
-    handle_score("t9 h10 s5")
-    handle_score("t9 h11 s5")
-
-    handle_score("t10 h10 s4")
-    handle_score("t10 h11 s5")
-    handle_score("t10 h12 s5")
-
-    handle_score("t18 h18 s4")
-    handle_score("t18 h1 s4")
-    handle_score("t18 h2 s6")
-    handle_score("t18 h3 s7")
-    handle_score("t18 h4 s6")
+#     handle_score("t1 h1 s4")
+#     handle_score("t1 h2 s5")
+#     handle_score("t1 h3 s4")
+#     handle_score("t1 h4 s6")
+#     handle_score("t1 h5 s4")
+#     handle_score("t1 h6 s4")
+#
+#     handle_score("t2 h2 s4")
+#     handle_score("t2 h3 s4")
+#     handle_score("t2 h4 s5")
+#     handle_score("t2 h5 s4")
+#     handle_score("t2 h6 s7")
+#     handle_score("t2 h7 s4")
+#
+#     handle_score("t3 h3 s4")
+#     handle_score("t3 h4 s4")
+#     handle_score("t3 h5 s4")
+#     handle_score("t3 h6 s4")
+#     handle_score("t3 h7 s5")
+#     handle_score("t3 h8 s5")
+#
+#     handle_score("t4 h4 s4")
+#     handle_score("t4 h5 s5")
+#     handle_score("t4 h6 s5")
+#     handle_score("t4 h7 s8")
+#     handle_score("t4 h8 s5")
+#     handle_score("t4 h9 s5")
+#     handle_score("t4 h10 s5")
+#
+#     handle_score("t5 h5 s4")
+#     handle_score("t5 h6 s5")
+#     handle_score("t5 h7 s5")
+#     handle_score("t5 h8 s5")
+#     handle_score("t5 h9 s8")
+#     handle_score("t5 h10 s7")
+#
+#     handle_score("t6 h6 s4")
+#     handle_score("t6 h7 s5")
+#     handle_score("t6 h8 s6")
+#     handle_score("t6 h9 s6")
+#     handle_score("t6 h10 s6")
+#     handle_score("t6 h11 s5")
+#
+#     handle_score("t7 h7 s4")
+#     handle_score("t7 h8 s5")
+#     handle_score("t7 h9 s7")
+#     handle_score("t7 h10 s5")
+#     handle_score("t7 h11 s5")
+#     handle_score("t7 h12 s7")
+#
+#     handle_score("t8 h8 s4")
+#     handle_score("t8 h9 s5")
+#     handle_score("t8 h10 s4")
+#     handle_score("t8 h11 s7")
+#     handle_score("t8 h12 s5")
+#     handle_score("t8 h13 s5")
+#
+#     handle_score("t9 h9 s4")
+#     handle_score("t9 h10 s5")
+#     handle_score("t9 h11 s5")
+#     handle_score("t9 h12 s5")
+#     handle_score("t9 h13 s5")
+#     handle_score("t9 h14 s5")
+#
+#     handle_score("t10 h10 s4")
+#     handle_score("t10 h11 s5")
+#     handle_score("t10 h12 s5")
+#     handle_score("t10 h13 s5")
+#     handle_score("t10 h14 s5")
+#     handle_score("t10 h15 s5")
+#
+#     handle_score("t11 h11 s5")
+#     handle_score("t11 h12 s5")
+#     handle_score("t11 h13 s4")
+#     handle_score("t11 h14 s5")
+#     handle_score("t11 h15 s5")
+#     handle_score("t11 h16 s5")
+#
+#     handle_score("t12 h12 s3")
+#     handle_score("t12 h13 s5")
+#     handle_score("t12 h14 s3")
+#     handle_score("t12 h15 s5")
+#     handle_score("t12 h16 s3")
+#     handle_score("t12 h17 s5")
+#
+#
+#     handle_score("t13 h13 s5")
+#     handle_score("t13 h14 s3")
+#     handle_score("t13 h15 s5")
+#     handle_score("t13 h16 s3")
+#     handle_score("t13 h17 s5")
+#     handle_score("t13 h18 s3")
+#
+#     handle_score("t18 h18 s4")
+#     handle_score("t18 h1 s4")
+#     handle_score("t18 h2 s6")
+#     handle_score("t18 h3 s7")
+#     handle_score("t18 h4 s6")
+#     handle_score("t18 h5 s6")
 
 
 
