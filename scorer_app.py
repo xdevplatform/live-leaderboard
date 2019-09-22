@@ -16,8 +16,14 @@ import hmac
 import logging
 import json
 import os
+import random
 import tweepy
 import fnmatch
+import csv
+#from weasyprint import HTML, CSS
+#import imgkit
+#from prettytable import from_csv
+#from beautifultable import BeautifulTable #TODO have not tried this yet.
 
 #Gonna be sending Tweets and DMs.
 HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
@@ -43,9 +49,9 @@ def get_team_scorers():
     We know who is reporting so we do nothave to require team id or name.
     '''
     #TODO if we use this and the order matters, these need to be updated to reflect new team order.
-    scorers = ['arisirenita', 'lindspanther', 'evanr', 'happycamper', 'BoomerMurray', 'ThomasMac_IV', 'kennykhlee', \
-               'robdehuff', 'kathleenso', 'noahwinter13', 'traviszachary', 'snowman', 'ericmartinyc', 'johnd', 'gmax', \
-               'maeloveholt', 'jpodnos']
+    #Updated on Sunday
+    scorers = ['arisirenita', 'lindspanther', 'evanr', 'snowman', 'BoomerMurray', 'zachnm', 'noahwinter13','kennykhlee','WHO', 'WHO','kathleenso', 'happycamper','WHO', 'WHO','johnd','gmax', 'maeloveholt','jpodnos','ericmartinyc']
+     #No longer scorers?  'ThomasMac_IV', 'robdehuff','traviszachary'
     return scorers
 
 def insert_score(team_id, hole, score, over_under):
@@ -83,54 +89,34 @@ def get_scores():
 
 def create_standings_image(df):
 
-
-
-    # Set CSS properties for th elements in dataframe
-    th_props = [
-        ('font-size', '11px'),
-        ('text-align', 'center'),
-        ('font-weight', 'bold'),
-        ('color', '#6d6d6d'),
-        ('background-color', '#f7f7f9')
-    ]
-
-    # Set CSS properties for td elements in dataframe
-    td_props = [
-        ('font-size', '11px')
-    ]
-
-    # Set table styles
-    styles = [
-        dict(selector="th", props=th_props),
-        dict(selector="td", props=td_props)
-    ]
-
-
-    df.style.set_table_styles(styles)
-
-
     #Generate image.
     # set fig size
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(8, 4))
     # no axes
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
     # no frame
     ax.set_frame_on(False)
     # plot table
-    tab = table(ax, df, loc='upper right')
+    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center')
     # set font manually
     tab.auto_set_font_size(False)
-    tab.set_fontsize(9)
+    tab.set_fontsize(12)
     # save the result
     if not os.path.exists('./img'):
         os.makedirs('./img')
     plt.savefig('./img/scores.png')
 
+# def create_standings_csv(df):
+#     df.to_csv('./csv/scores.csv', index=False)
+#
+# def create_standings_html(df):
+#     df.to_html('./html/scores_v0.html')
+
 def get_last_hole(team, holes_completed):
     #Important note: team number indicates the hole that the team started on.
 
-    last_hole = team + holes_completed -1
+    last_hole = team + holes_completed - 1
 
     if last_hole > 18:
         last_hole = last_hole - 18
@@ -152,7 +138,7 @@ def create_standings():
     scores_df.columns = ["team_id", "team_name", "hole", "score", "time_stamp", "over_under"]
     #Drop columns that are not currently needed in standings.
     scores_df.drop('team_name', axis=1, inplace=True)
-    scores_df.drop('time_stamp', axis=1, inplace=True)  #TODO - this seems key to pick off more recent completed hole.
+    scores_df.drop('time_stamp', axis=1, inplace=True)  #Note - this seems key to pick off more recent completed hole.
 
     #print (scores_df)
 
@@ -177,47 +163,33 @@ def create_standings():
 
         #print (f"Team {team} has a score of {score} with an over/under of {over_under}")
 
-    print (team_scores)
-
     #Make dataframe.
-    df_standings = pd.DataFrame(team_scores, columns=['Team','Score','Total','Holes completed'])
+    df_standings = pd.DataFrame(team_scores, columns=['Team','Score','Total','Holes'])
 
-    print (df_standings)
+    #print (df_standings)
 
     #Sort dataframe
-    df_sorted = df_standings.sort_values(by=['Score', 'Holes completed'], ascending=[True, False])
+    df_sorted = df_standings.sort_values(by=['Score', 'Holes'], ascending=[True, False])
 
-    df_sorted.set_index('Team', inplace=True)
-
-
-    print (df_sorted)
+    #print (df_sorted)
 
     create_standings_image(df_sorted)
-
+    #create_standings_csv(df_sorted)
+    #create_standings_html(df_sorted)
 
 # Takes generated image from above method and upload to Twitter, return media_id.
-def upload_media(image_file):
+def get_media_id(image_file):
     res = api.media_upload(image_file)
-    media_ids = []
-    # Add returned media_id to array
-    media_ids.append(res.media_id)
-
-    return media_ids
-
-#TODO
-def get_media_ids():
-    '''Requests media ids from Twitter. We may be uploadog'''
-    ids = []
-    return ids
+    return res.media_id
 
 def send_tweet(message, media_id = None):
     '''Sends a Tweet. Can handle native media. '''
     api.update_status(message, media_id=media_id)
 
 #TODO: Needs to learn how to send native media.
-def send_direct_message(recipient_id, message):
-    api.send_direct_message(recipient_id, message)
+def send_direct_message(recipient_id, message, media_id=None):
 
+    api.send_direct_message(recipient_id, message, attachment_media_id = media_id)
 
 def handle_score(message):
     '''Parses and stores score.'''
@@ -275,25 +247,25 @@ def handle_score(message):
     over_under = get_over_under(hole, score)
 
     #Save the score.
-    print (f"Inserting for team {team_id}: hole {hole} with score {score} with over_under of {over_under}")
+    #print (f"Inserting for team {team_id}: hole {hole} with score {score} with over_under of {over_under}")
 
     insert_score(int(team_id), int(hole), int(score), int(over_under))
 
-    #TODO Send submitter the leaderboard via DM?
-    #Generate leaderboard
-    #send_leaderboard_dm()
-
 #TODO
 def send_leaderboard_tweet():
-    test_image = "scorecard.png"
-    media_id = upload_media(test_image)
+    media_id = get_media_id('./img/scores.png')
     message = "Here's the leaderboad:"
 
     api.update_status(status=message, media_ids=media_id)
 
+
 #TODO
-def send_leaderboard_dm():
-    pass
+def send_leaderboard_dm(recipient_id):
+    media_id = get_media_id('./img/scores.png')
+    message = "Here's the leaderboad:"
+
+    send_direct_message(recipient_id, message, media_id)
+
 
 #TODO - supporting more formats?
 def is_score(message):
@@ -304,7 +276,8 @@ def is_score(message):
     #Look for markers that this is a score (#t #h #s).
     #TODO: what are the patterns that indicate that it is a score.
 
-    if 't' in message and 'h' in message and 's' in message: #TODO harden with pattern matching t?, t??, etc.
+    #TODO harden with pattern matching t?, t??, etc. Note that the word 'this' satisfies the score pattern.
+    if 't' in message and 'h' in message and 's' in message:
         is_score = True
     #elif 't' in message and 'h' in message and 's' in message: #TODO
     #    pass
@@ -348,6 +321,8 @@ def handle_dm(dm):
             handle_score(message) #Store score.
             response = "Got it, thanks!"
             send_direct_message(sender_id, response)
+            #Also confirm with leaderboard sent by DM
+            send_leaderboard_dm(sender_id)
         elif is_leaderboard_command(message):
             send_leaderboard_tweet() #Tweet out leaderboard.
             response = "OK, gonna Tweet the leaderboard."
@@ -413,112 +388,24 @@ if __name__ == '__main__':
 
 
 ##Saved 'callers' for unit testing.
-if __name__ == '__main__':
+#if __name__ == '__main__':
 
-    #print (get_over_under(1,6))
+#   print (get_over_under(1,6))
 
-#    create_standings()
+#   create_standings()
 
 #   #Seeding database with data.  handle_score("t h s5")
 #     handle_score("t1 h1 s4")
 #     handle_score("t1 h2 s5")
 #     handle_score("t1 h3 s4")
-#     handle_score("t1 h4 s6")
-#     handle_score("t1 h5 s4")
-#     handle_score("t1 h6 s4")
-#
-#     handle_score("t2 h2 s4")
-#     handle_score("t2 h3 s4")
-#     handle_score("t2 h4 s5")
-#     handle_score("t2 h5 s4")
-#     handle_score("t2 h6 s7")
-#     handle_score("t2 h7 s4")
-#
-#     handle_score("t3 h3 s4")
-#     handle_score("t3 h4 s4")
-#     handle_score("t3 h5 s4")
-#     handle_score("t3 h6 s4")
-#     handle_score("t3 h7 s5")
-#     handle_score("t3 h8 s5")
-#
-#     handle_score("t4 h4 s4")
-#     handle_score("t4 h5 s5")
-#     handle_score("t4 h6 s5")
-#     handle_score("t4 h7 s8")
-#     handle_score("t4 h8 s5")
-#     handle_score("t4 h9 s5")
-#     handle_score("t4 h10 s5")
-#
-#     handle_score("t5 h5 s4")
-#     handle_score("t5 h6 s5")
-#     handle_score("t5 h7 s5")
-#     handle_score("t5 h8 s5")
-#     handle_score("t5 h9 s8")
-#     handle_score("t5 h10 s7")
-#
-#     handle_score("t6 h6 s4")
-#     handle_score("t6 h7 s5")
-#     handle_score("t6 h8 s6")
-#     handle_score("t6 h9 s6")
-#     handle_score("t6 h10 s6")
-#     handle_score("t6 h11 s5")
-#
-#     handle_score("t7 h7 s4")
-#     handle_score("t7 h8 s5")
-#     handle_score("t7 h9 s7")
-#     handle_score("t7 h10 s5")
-#     handle_score("t7 h11 s5")
-#     handle_score("t7 h12 s7")
-#
-#     handle_score("t8 h8 s4")
-#     handle_score("t8 h9 s5")
-#     handle_score("t8 h10 s4")
-#     handle_score("t8 h11 s7")
-#     handle_score("t8 h12 s5")
-#     handle_score("t8 h13 s5")
-#
-#     handle_score("t9 h9 s4")
-#     handle_score("t9 h10 s5")
-#     handle_score("t9 h11 s5")
-#     handle_score("t9 h12 s5")
-#     handle_score("t9 h13 s5")
-#     handle_score("t9 h14 s5")
-#
-#     handle_score("t10 h10 s4")
-#     handle_score("t10 h11 s5")
-#     handle_score("t10 h12 s5")
-#     handle_score("t10 h13 s5")
-#     handle_score("t10 h14 s5")
-#     handle_score("t10 h15 s5")
-#
-#     handle_score("t11 h11 s5")
-#     handle_score("t11 h12 s5")
-#     handle_score("t11 h13 s4")
-#     handle_score("t11 h14 s5")
-#     handle_score("t11 h15 s5")
-#     handle_score("t11 h16 s5")
-#
-#     handle_score("t12 h12 s3")
-#     handle_score("t12 h13 s5")
-#     handle_score("t12 h14 s3")
-#     handle_score("t12 h15 s5")
-#     handle_score("t12 h16 s3")
-#     handle_score("t12 h17 s5")
-#
-#
-#     handle_score("t13 h13 s5")
-#     handle_score("t13 h14 s3")
-#     handle_score("t13 h15 s5")
-#     handle_score("t13 h16 s3")
-#     handle_score("t13 h17 s5")
-#     handle_score("t13 h18 s3")
-#
-#     handle_score("t18 h18 s4")
-#     handle_score("t18 h1 s4")
-#     handle_score("t18 h2 s6")
-#     handle_score("t18 h3 s7")
-#     handle_score("t18 h4 s6")
-#     handle_score("t18 h5 s6")
+
+    # for h in range(18):
+    #     hole = h + 1
+    #     for t in range(18):
+    #         team = t + 1
+    #         score = random.randrange(3, 8, 1)
+    #
+    #         handle_score(f"t{team} h{hole} s{score}")
 
 
 
