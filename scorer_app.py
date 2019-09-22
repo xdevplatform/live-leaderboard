@@ -19,6 +19,7 @@ import os
 import random
 import tweepy
 import fnmatch
+import time
 
 #Gonna be sending Tweets and DMs.
 HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
@@ -52,16 +53,24 @@ def get_team_scorers():
 def insert_score(team_id, hole, score, over_under):
     ''' Database wrapper for storing scores. '''
 
+    success = False
+
     try:
         #Create database connection.
         con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
         cur = con.cursor()
         cur.execute(f"INSERT INTO scores (time_stamp,team_id,hole,score, over_under) VALUES (NOW(),{team_id},{hole},{score}, {over_under});")
         con.commit()
+        success = True
     except:
         print ("Error on INSERT, assuming duplicate!")
+        success = False
 
     con.close()
+
+    return success
+
+
 
 def get_over_under(hole, score):
     par = PARS[(int(hole)-1)]
@@ -247,25 +256,27 @@ def handle_score(message):
     over_under = get_over_under(hole, score)
 
     #Save the score.
-    #print (f"Inserting for team {team_id}: hole {hole} with score {score} with over_under of {over_under}")
+    print (f"Inserting for team {team_id}: hole {hole} with score {score} with over_under of {over_under}")
 
-    insert_score(int(team_id), int(hole), int(score), int(over_under))
+    success = insert_score(int(team_id), int(hole), int(score), int(over_under))
+    create_standings() #New score, update the standings
+
+    return success
 
 #TODO
 def send_leaderboard_tweet():
     media_id = get_media_id('./img/scores.png')
-    message = "Here's the leaderboad:"
+    message = "Here are the current standings:"
 
     api.update_status(status=message, media_ids=media_id)
 
-
 #TODO
 def send_leaderboard_dm(recipient_id):
+    create_standings()
     media_id = get_media_id('./img/scores.png')
-    message = "Here's the leaderboad..."
+    #message = "Here are the currrent standings..."
 
-    send_direct_message(recipient_id, message, media_id)
-
+    send_direct_message(recipient_id, '', media_id)
 
 #TODO - supporting more formats?
 def is_score(message):
@@ -318,15 +329,19 @@ def handle_dm(dm):
             pass #Ignoring by design.
     elif sender_id != HOST_ACCOUNT_ID:
         if is_score(message):
-            handle_score(message) #Store score.
-            response = "Got it, thanks!"
-            send_direct_message(sender_id, response)
-            #Also confirm with leaderboard sent by DM
-            send_leaderboard_dm(sender_id)
+            success = handle_score(message) #Store score.
+            if success:
+                response = "Got it, thanks!"
+                send_direct_message(sender_id, response)
+                #Also confirm with leaderboard sent by DM
+                send_leaderboard_dm(sender_id)
         elif is_leaderboard_command(message):
-            send_leaderboard_tweet() #Tweet out leaderboard.
-            response = "OK, gonna Tweet the leaderboard."
-            send_direct_message(sender_id, response)
+            if 'tweet' in message.lower() or 'post' in message.lower():
+                send_leaderboard_tweet() #Tweet out leaderboard.
+                response = "OK, gonna Tweet the current standings."
+                send_direct_message(sender_id, response)
+            else:
+                send_leaderboard_dm(sender_id)
         else:
             pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
             response = "Sorry, busy keeping score..."
@@ -406,6 +421,7 @@ if __name__ == '__main__':
     #         score = random.randrange(3, 8, 1)
     #
     #         handle_score(f"t{team} h{hole} s{score}")
+    #         time.sleep(5)
 
 
 
