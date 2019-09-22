@@ -19,11 +19,6 @@ import os
 import random
 import tweepy
 import fnmatch
-import csv
-#from weasyprint import HTML, CSS
-#import imgkit
-#from prettytable import from_csv
-#from beautifultable import BeautifulTable #TODO have not tried this yet.
 
 #Gonna be sending Tweets and DMs.
 HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
@@ -189,7 +184,10 @@ def send_tweet(message, media_id = None):
 #TODO: Needs to learn how to send native media.
 def send_direct_message(recipient_id, message, media_id=None):
 
-    api.send_direct_message(recipient_id, message, attachment_media_id = media_id)
+    if media_id == None:
+        api.send_direct_message(recipient_id, message)
+    else:
+        api.send_direct_message(recipient_id, message, attachment_media_id = media_id, attachment_type='media')
 
 def handle_score(message):
     '''Parses and stores score.'''
@@ -201,6 +199,8 @@ def handle_score(message):
     team_id = -1
     hole = 0
     score = 0
+
+    message = message.lower()
 
     #We have a score, so parse it.
     tokens = message.split(' ')
@@ -262,7 +262,7 @@ def send_leaderboard_tweet():
 #TODO
 def send_leaderboard_dm(recipient_id):
     media_id = get_media_id('./img/scores.png')
-    message = "Here's the leaderboad:"
+    message = "Here's the leaderboad..."
 
     send_direct_message(recipient_id, message, media_id)
 
@@ -277,7 +277,7 @@ def is_score(message):
     #TODO: what are the patterns that indicate that it is a score.
 
     #TODO harden with pattern matching t?, t??, etc. Note that the word 'this' satisfies the score pattern.
-    if 't' in message and 'h' in message and 's' in message:
+    if 't' in message.lower() and 'h' in message.lower() and 's' in message.lower():
         is_score = True
     #elif 't' in message and 'h' in message and 's' in message: #TODO
     #    pass
@@ -304,10 +304,10 @@ def handle_dm(dm):
         * Currently ignoring other DMs.
     '''
 
-    print (f"Received a Direct Message from {sender_id} with message: {message}") #TODO: tweepy to get handle.
-
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
+
+    print (f"Received a Direct Message from {sender_id} with message: {message}") #TODO: tweepy to get handle.
 
     if sender_id == HOST_ACCOUNT_ID: #Then special handling. #Ignore DM events from DM we sent.
         if is_leaderboard_command(message):
