@@ -1,28 +1,29 @@
 #!/usr/bin/env python
+import base64
+import fnmatch
+import hashlib
+import hmac
+import json
+import logging
+import os
+import random
+import time
+
 from flask import Flask, request, send_from_directory, make_response
-from http import HTTPStatus
-import psycopg2
+import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 import pandas.io.sql as psql
-import matplotlib.pylab as plt
 from pandas.plotting import table
+import psycopg2
+import requests
+from requests_oauthlib import OAuth1
+import tweepy
 from dotenv import load_dotenv
 load_dotenv(verbose=True)  # Throws error if it can't find .env file
 
-import base64
-import hashlib
-import hmac
-import logging
-import json
-import os
-import random
-import tweepy
-import fnmatch
-import time
-
-#Gonna be sending Tweets and DMs.
-HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
+# Gonna be sending Tweets and DMs.
+HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  # OR os.environ.get
 CONSUMER_KEY = os.getenv('CONSUMER_KEY', None)
 CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', None) #Also needed for CRC.
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
