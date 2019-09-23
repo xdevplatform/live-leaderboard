@@ -22,8 +22,8 @@ import tweepy
 from dotenv import load_dotenv
 load_dotenv(verbose=True)  # Throws error if it can't find .env file
 
-# Gonna be sending Tweets and DMs.
-HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  # OR os.environ.get
+#Gonna be sending Tweets and DMs.
+HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
 CONSUMER_KEY = os.getenv('CONSUMER_KEY', None)
 CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', None) #Also needed for CRC.
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
@@ -48,7 +48,7 @@ def get_team_scorers():
     #TODO if we use this and the order matters, these need to be updated to reflect new team order.
     #Updated on Sunday
     scorers = ['arisirenita', 'lindspanther', 'evanr', 'snowman', 'BoomerMurray', 'zachnm', 'noahwinter13','kennykhlee','WHO', 'WHO','kathleenso', 'happycamper','WHO', 'WHO','johnd','gmax', 'maeloveholt','jpodnos','ericmartinyc']
-     #No longer scorers?  'ThomasMac_IV', 'robdehuff','traviszachary'
+    #No longer scorers?  'ThomasMac_IV', 'robdehuff','traviszachary'
     return scorers
 
 def insert_score(team_id, hole, score, over_under):
@@ -404,28 +404,24 @@ if __name__ == '__main__':
 
 
 ##Saved 'callers' for unit testing.
-#if __name__ == '__main__':
-
-#   print (get_over_under(1,6))
-
-#   create_standings()
-
-#   #Seeding database with data.  handle_score("t h s5")
-#     handle_score("t1 h1 s4")
-#     handle_score("t1 h2 s5")
-#     handle_score("t1 h3 s4")
-
-    # for h in range(18):
-    #     hole = h + 1
-    #     for t in range(18):
-    #         team = t + 1
-    #         score = random.randrange(3, 8, 1)
-    #
-    #         handle_score(f"t{team} h{hole} s{score}")
-    #         time.sleep(5)
-
-
-
-
+# if __name__ == '__main__':
+#
+# #   print (get_over_under(1,6))
+#
+# #   create_standings()
+#
+# #   #Seeding database with data.  handle_score("t h s5")
+# #     handle_score("t1 h1 s4")
+# #     handle_score("t1 h2 s5")
+# #     handle_score("t1 h3 s4")
+#
+#     for h in range(18):
+#         hole = h + 1
+#         for t in range(18):
+#             team = t + 1
+#             score = random.randrange(PARS[int(hole-1)]-1, PARS[int(hole-1)]+4, 1)
+#
+#             handle_score(f"t{team} h{hole} s{score}")
+#             time.sleep(2)
 
 
