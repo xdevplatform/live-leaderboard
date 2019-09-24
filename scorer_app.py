@@ -6,6 +6,7 @@ import hmac
 import json
 import logging
 import os
+import re
 import random
 import time
 
@@ -238,7 +239,7 @@ def get_media_id(image_path):
 
     return media_id
 
-#TODO
+#TODO - eliminate?
 def send_tweet(message, media_id = None):
     '''Sends a Tweet. Can handle native media. '''
     api.update_status(message, media_id=media_id)
@@ -334,24 +335,26 @@ def send_leaderboard_dm(recipient_id):
 
     send_direct_message(recipient_id, '', media_id)
 
-#TODO - supporting more formats?
 def is_score(message):
     '''Parses DM message and sees if it is a score.'''
 
     is_score = False #Default.
 
-    #Look for markers that this is a score (#t #h #s).
-    #TODO: what are the patterns that indicate that it is a score.
+    if 'delete' in message.lower() or 'update' in message.lower():
+        return False
+
+    #Look for markers that this is a score (t## h## s##).
 
     #TODO harden with pattern matching t?, t??, etc. Note that the word 'this' satisfies the score pattern.
     if 't' in message.lower() and 'h' in message.lower() and 's' in message.lower():
         is_score = True
-    #elif 't' in message and 'h' in message and 's' in message: #TODO
-    #    pass
 
-
-    #Parse score.
     return is_score
+
+def is_correction(message):
+    #TODO: check for 'delete' or 'update' with hole and team_id
+
+    pass
 
 def is_leaderboard_command(message):
     '''Parses DM message to see if it is a command to send DM with leaderboard.'''
@@ -398,6 +401,8 @@ def handle_dm(dm):
                 send_direct_message(sender_id, response)
             else:
                 send_leaderboard_dm(sender_id)
+        elif is_correction(message):
+            pass
         else:
             pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
             response = "Sorry, busy keeping score..."
