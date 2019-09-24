@@ -11,6 +11,8 @@ import random
 import time
 
 from flask import Flask, request, send_from_directory, make_response
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
@@ -43,6 +45,8 @@ api = tweepy.API(auth)
 USER_AUTH = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
+
+BIRDIE_IMAGES = ['./static/birdie1.jpg', './static/birdie2.jpg', './static/birdie3.jpg', './static/birdie4.jpg']
 
 def get_team_scorers():
     '''
@@ -133,24 +137,37 @@ def get_scores():
     return scores_df
 
 def create_standings_image(df):
-    header_colors = ["#7ed4ff","#7ed4ff","#7ed4ff","#7ed4ff"]
+    header_colors = ["#7ed4ff"]*4
+    cell_colors = [["#ffffff"]*4 
+                    if x % 2 == 0
+                    else ["#D3D3D3"]*4
+                    for x in range(0,df.shape[0])
+                  ]
     #Generate image.
     # set fig size
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(4.5,4.5))
     # no axes
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
     # no frame
     ax.set_frame_on(False)
+    # Set index to place list
+    df["my_index"] = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th']
+    df.set_index("my_index",inplace = True)
     # plot table
-    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center', colWidths=[0.11, 0.11, 0.11, 0.20], colColours=header_colors)
+    tab = table(ax, df, loc='center', cellLoc='center', colWidths=[0.17, 0.17, 0.17, 0.28],
+                    colColours=header_colors, cellColours=cell_colors, bbox=[0,-.1,1.05,1.22]
+                    )
     # set font manually
     tab.auto_set_font_size(False)
     tab.set_fontsize(10)
 
     table_props = tab.properties()
     table_cells = table_props['child_artists']
-    for cell in table_cells: cell.set_height(0.07)
+    for cell in table_cells: cell.set_height(0.1)
+    for i,cell in enumerate(table_cells):
+        if (i+1) % 5 == 0:
+            cell.set_fill('k')
 
     # save the result
     if not os.path.exists('./img'):
@@ -223,8 +240,6 @@ def create_standings():
 
     df_sorted.loc[df_sorted.Score > 0, 'Score'] = '+' + df_sorted['Score'].astype(str)
 
-    print (df_sorted)
-
     create_standings_image(df_sorted)
     #create_standings_csv(df_sorted)
     #create_standings_html(df_sorted)
@@ -246,9 +261,13 @@ def get_media_id(image_path):
     return media_id
 
 #TODO - eliminate?
-def send_tweet(message, media_id = None):
-    '''Sends a Tweet. Can handle native media. '''
-    api.update_status(message, media_id=media_id)
+def send_tweet(message, media_id):
+    '''Posts Tweet using requests library'''
+
+    resource_url = "https://api.twitter.com/1.1/statuses/update.json"
+    payload = {"status": message, "media_ids": media_id}
+
+    response = requests.post(resource_url, auth=USER_AUTH, params=payload)
 
 def send_direct_message(recipient_id, message, media_id=None):
 
@@ -323,11 +342,18 @@ def handle_score(message):
     success = insert_score(int(team_id), int(hole), int(score), int(over_under))
     create_standings() #New score, update the standings
 
+    # Birdie alert: if insert was successful and over_under score is '-1', send birdie alert
+    if success and over_under == -1:
+        message = f"#BirdieAlert\nTeam {team_id} just got a birdie on hole {hole}!"
+        image = random.choice(BIRDIE_IMAGES)
+        media_id = get_media_id(image)
+        send_tweet(message, media_id)
+
     return success
 
 # Done. Working as of 9/23 7:00pm MT
 def send_leaderboard_tweet():
-    '''Uploads medai to get media_id, then posts Tweet using requests library'''
+    '''Uploads media to get media_id, then posts Tweet using requests library'''
 
     resource_url = "https://api.twitter.com/1.1/statuses/update.json"
     message = "Here are the current standings:"
@@ -453,35 +479,35 @@ def twitter_crc_validation():
 def event_manager():
 
     #Match on event types that we care about. So far, just paying attention to DMs.
-    if 'direct_message_indicate_typing_events' in request.json:
-        pass #Ignoring these by design...
-    elif 'direct_message_events' in request.json:
+    if 'direct_message_events' in request.json:
         handle_dm(request.json)
-    elif 'tweet_create_events' in request.json:
-        #Need to look at Tweet payload's User to know if host account created Tweet?
-        #Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
-        pass #Not doing anything with these yet...
-    elif 'favorite_events' in request.json:
-        pass #Not doing anything with these yet...
+        return "200"
+    # elif 'direct_message_indicate_typing_events' in request.json:
+    #     pass
+    # elif 'tweet_create_events' in request.json:
+    #     # Testing with @HackerScorer mention, and had to parse User ID to know who mentined, and entities.user_mentions to know who they mentioned.
+    #     pass
+    # elif 'favorite_events' in request.json:
+    #     pass
 
     return "200"
 
-# if __name__ == '__main__':
-#     # Bind to PORT if defined, otherwise default to 5000.
-#     port = int(os.getenv('PORT', 5000))
-#     # Logger code
-#     gunicorn_logger = logging.getLogger('gunicorn.error')
-#     app.logger.handlers = gunicorn_logger.handlers
-#     app.logger.setLevel(gunicorn_logger.level)
-#     app.run(host='0.0.0.0', port=port, debug=True)
+if __name__ == '__main__':
+    # Bind to PORT if defined, otherwise default to 5000.
+    port = int(os.getenv('PORT', 5000))
+    # Logger code
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
 ##Saved 'callers' for unit testing.
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
 #   print (get_over_under(1,6))
 
-   create_standings()
+#   create_standings()
 #
 # #   #Seeding database with data.  handle_score("t h s5")
 # #     handle_score("t1 h1 s4")
