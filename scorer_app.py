@@ -79,7 +79,10 @@ def get_over_under(hole, score):
     par = PARS[(int(hole)-1)]
     return int(score) - par
 
-def delete_score(team_id, hole):
+def delete_score(message):
+
+    #Parse out team_id and holee.
+
     try:
         #Create database connection.
         con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
@@ -95,7 +98,10 @@ def delete_score(team_id, hole):
 
     return success
 
-def update_score(team_id, hole, score):
+def update_score(message):
+
+    #Parse out team_id, hole, and score.
+
     try:
         #Create database connection.
         con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
@@ -251,8 +257,8 @@ def send_direct_message(recipient_id, message, media_id=None):
     else:
         api.send_direct_message(recipient_id, message, attachment_media_id = media_id, attachment_type='media')
 
-def handle_score(message):
-    '''Parses and stores score.'''
+
+def parse_details(message):
     have_team = False
     have_hole = False
     have_score = False
@@ -264,12 +270,7 @@ def handle_score(message):
 
     message = message.lower()
 
-    #We have a score, so parse it.
     tokens = message.split(' ')
-
-    #TODO: have more patterns to look for? Add them here.
-
-    #Parse team_id.
 
     team_token = fnmatch.filter(tokens, 't?')
     if len(team_token) == 1:
@@ -305,6 +306,14 @@ def handle_score(message):
         if len(score_token) == 1:
             have_score = True
             score = score_token[0][1:]
+
+
+    return team_id, hole, score
+
+def handle_score(message):
+    '''Parses and stores score.'''
+
+    team_id, hole, score = parse_details(message)
 
     over_under = get_over_under(hole, score)
 
@@ -402,7 +411,10 @@ def handle_dm(dm):
             else:
                 send_leaderboard_dm(sender_id)
         elif is_correction(message):
-            pass
+            if 'delete' in message.lower():
+                delete_score(message)
+            elif 'update' in message.lower():
+                update_score(message)
         else:
             pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
             response = "Sorry, busy keeping score..."
@@ -454,35 +466,35 @@ def event_manager():
 
     return "200"
 
-if __name__ == '__main__':
-    # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.getenv('PORT', 5000))
-    # Logger code
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
-    app.run(host='0.0.0.0', port=port, debug=True)
+# if __name__ == '__main__':
+#     # Bind to PORT if defined, otherwise default to 5000.
+#     port = int(os.getenv('PORT', 5000))
+#     # Logger code
+#     gunicorn_logger = logging.getLogger('gunicorn.error')
+#     app.logger.handlers = gunicorn_logger.handlers
+#     app.logger.setLevel(gunicorn_logger.level)
+#     app.run(host='0.0.0.0', port=port, debug=True)
 
 
 ##Saved 'callers' for unit testing.
-#if __name__ == '__main__':
+if __name__ == '__main__':
 
 #   print (get_over_under(1,6))
 
-#   create_standings()
+   create_standings()
 #
 # #   #Seeding database with data.  handle_score("t h s5")
 # #     handle_score("t1 h1 s4")
 # #     handle_score("t1 h2 s5")
 # #     handle_score("t1 h3 s4")
 #
-#     for h in range(18):
-#         hole = h + 1
-#         for t in range(18):
-#             team = t + 1
-#             score = random.randrange(PARS[int(hole-1)]-1, PARS[int(hole-1)]+4, 1)
-#
-#             handle_score(f"t{team} h{hole} s{score}")
-#             time.sleep(2)
+    # for h in range(18):
+    #     hole = h + 1
+    #     for t in range(18):
+    #         team = t + 1
+    #         score = random.randrange(PARS[int(hole-1)]-1, PARS[int(hole-1)]+4, 1)
+    #
+    #         handle_score(f"t{team} h{hole} s{score}")
+    #         time.sleep(2)
 
 
