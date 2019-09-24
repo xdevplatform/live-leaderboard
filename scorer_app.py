@@ -74,11 +74,41 @@ def insert_score(team_id, hole, score, over_under):
 
     return success
 
-
-
 def get_over_under(hole, score):
     par = PARS[(int(hole)-1)]
     return int(score) - par
+
+def delete_score(team_id, hole):
+    try:
+        #Create database connection.
+        con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
+        cur = con.cursor()
+        cur.execute(f"DELETE scores WHERE team_id = {team_id} AND hole = {hole};")
+        con.commit()
+        success = True
+    except:
+        print ("Error on DELETE!")
+        success = False
+
+    con.close()
+
+    return success
+
+def update_score(team_id, hole, score):
+    try:
+        #Create database connection.
+        con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
+        cur = con.cursor()
+        cur.execute(f"UPDATE scores SET score = {score} WHERE team_id = {team_id} AND hole = {hole};")
+        con.commit()
+        success = True
+    except:
+        print ("Error on UPDATE!")
+        success = False
+
+    con.close()
+
+    return success
 
 def get_scores():
     '''Database wrpper for retrieving ALL scores.'''
@@ -96,7 +126,7 @@ def get_scores():
     return scores_df
 
 def create_standings_image(df):
-    header_colors = ["#7EFF8A","#7EFF8A","#7EFF8A","#7EFF8A"]
+    header_colors = ["#7ed4ff","#7ed4ff","#7ed4ff","#7ed4ff"]
     #Generate image.
     # set fig size
     fig, ax = plt.subplots(figsize=(8, 4))
@@ -106,14 +136,15 @@ def create_standings_image(df):
     # no frame
     ax.set_frame_on(False)
     # plot table
-    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center', colWidths=[0.125, 0.125, 0.125, 0.125], colColours=header_colors)
+    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center', colWidths=[0.11, 0.11, 0.11, 0.20], colColours=header_colors)
     # set font manually
     tab.auto_set_font_size(False)
     tab.set_fontsize(10)
 
     table_props = tab.properties()
     table_cells = table_props['child_artists']
-    for cell in table_cells: cell.set_height(0.05)
+    for cell in table_cells: cell.set_height(0.07)
+
     # save the result
     if not os.path.exists('./img'):
         os.makedirs('./img')
@@ -176,14 +207,16 @@ def create_standings():
         #print (f"Team {team} has a score of {score} with an over/under of {over_under}")
 
     #Make dataframe.
-    df_standings = pd.DataFrame(team_scores, columns=['Team','Score','Total','Holes'])
+    df_standings = pd.DataFrame(team_scores, columns=['Team','Score','Total','Holes played'])
 
     #print (df_standings)
 
     #Sort dataframe
-    df_sorted = df_standings.sort_values(by=['Score', 'Holes'], ascending=[True, False])
+    df_sorted = df_standings.sort_values(by=['Score', 'Holes played'], ascending=[True, False])
 
-    #print (df_sorted)
+    df_sorted.loc[df_sorted.Score > 0, 'Score'] = '+' + df_sorted['Score'].astype(str)
+
+    print (df_sorted)
 
     create_standings_image(df_sorted)
     #create_standings_csv(df_sorted)
@@ -205,11 +238,11 @@ def get_media_id(image_path):
 
     return media_id
 
+#TODO
 def send_tweet(message, media_id = None):
     '''Sends a Tweet. Can handle native media. '''
     api.update_status(message, media_id=media_id)
 
-#TODO: Needs to learn how to send native media.
 def send_direct_message(recipient_id, message, media_id=None):
 
     if media_id == None:
@@ -294,7 +327,6 @@ def send_leaderboard_tweet():
 
     response = requests.post(resource_url, auth=USER_AUTH, params=payload)
 
-#TODO
 def send_leaderboard_dm(recipient_id):
     create_standings()
     media_id = get_media_id('./img/scores.png')
@@ -428,11 +460,11 @@ if __name__ == '__main__':
 
 
 ##Saved 'callers' for unit testing.
-# if __name__ == '__main__':
-#
-# #   print (get_over_under(1,6))
-#
-# #   create_standings()
+#if __name__ == '__main__':
+
+#   print (get_over_under(1,6))
+
+#   create_standings()
 #
 # #   #Seeding database with data.  handle_score("t h s5")
 # #     handle_score("t1 h1 s4")
