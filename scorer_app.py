@@ -38,6 +38,9 @@ auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
 
+# Generate user context auth (OAuth1)
+USER_AUTH = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
 PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
 
 def get_team_scorers():
@@ -93,7 +96,7 @@ def get_scores():
     return scores_df
 
 def create_standings_image(df):
-
+    header_colors = ["#7EFF8A","#7EFF8A","#7EFF8A","#7EFF8A"]
     #Generate image.
     # set fig size
     fig, ax = plt.subplots(figsize=(8, 4))
@@ -103,10 +106,14 @@ def create_standings_image(df):
     # no frame
     ax.set_frame_on(False)
     # plot table
-    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center')
+    tab = table(ax, df, rowLabels=['']*df.shape[0], loc='center', cellLoc='center', colWidths=[0.125, 0.125, 0.125, 0.125], colColours=header_colors)
     # set font manually
     tab.auto_set_font_size(False)
-    tab.set_fontsize(12)
+    tab.set_fontsize(10)
+
+    table_props = tab.properties()
+    table_cells = table_props['child_artists']
+    for cell in table_cells: cell.set_height(0.05)
     # save the result
     if not os.path.exists('./img'):
         os.makedirs('./img')
@@ -183,9 +190,20 @@ def create_standings():
     #create_standings_html(df_sorted)
 
 # Takes generated image from above method and upload to Twitter, return media_id.
-def get_media_id(image_file):
-    res = api.media_upload(image_file)
-    return res.media_id
+def get_media_id(image_path):
+    '''Uploads media using requests library'''
+    # Open the image
+    with open(image_path, "rb") as image_file:
+        image_raw = base64.b64encode(image_file.read())
+
+    resource_url = "https://upload.twitter.com/1.1/media/upload.json"
+    payload = {"media": image_raw}
+
+    response = requests.post(resource_url, auth=USER_AUTH, data=payload)
+    json_response = (json.loads(response.text))
+    media_id = json_response.get("media_id")
+
+    return media_id
 
 def send_tweet(message, media_id = None):
     '''Sends a Tweet. Can handle native media. '''
@@ -264,12 +282,17 @@ def handle_score(message):
 
     return success
 
-#TODO
+# Done. Working as of 9/23 7:00pm MT
 def send_leaderboard_tweet():
-    media_id = get_media_id('./img/scores.png')
-    message = "Here are the current standings:"
+    '''Uploads medai to get media_id, then posts Tweet using requests library'''
 
-    api.update_status(status=message, media_ids=media_id)
+    resource_url = "https://api.twitter.com/1.1/statuses/update.json"
+    message = "Here are the current standings:"
+    # Calls get_media_id method to upload image and get media_id.
+    media_id = get_media_id("./img/scores.png")
+    payload = {"status": message, "media_ids": media_id}
+
+    response = requests.post(resource_url, auth=USER_AUTH, params=payload)
 
 #TODO
 def send_leaderboard_dm(recipient_id):
@@ -348,7 +371,8 @@ def handle_dm(dm):
             response = "Sorry, busy keeping score..."
             send_direct_message(sender_id, response)
 
-#=======================================================================================================================
+#==================================================================================================================
+
 app = Flask(__name__)
 
 #generic index route
@@ -403,12 +427,10 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
 
 
-##Saved 'callers' for unit testing.
-#if __name__ == '__main__':
-
-#   print (get_over_under(1,6))
-
-#   create_standings()
+## Saved 'callers' for unit testing.
+# if __name__ == '__main__':
+    # create_standings()
+    # send_leaderboard_tweet()
 
 #   #Seeding database with data.  handle_score("t h s5")
 #     handle_score("t1 h1 s4")

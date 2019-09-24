@@ -22,8 +22,8 @@ env_name = "prod"
 # Assign the resource url
 resource_url = f"https://api.twitter.com/1.1/account_activity/all/{env_name}/webhooks.json"
 
-# Provide the web app URL that you want to register as the webhook
-url_dict = {"url": "https://49809330.ngrok.io/webhook"}
+# Provide the web app URL (including path e.g., /webhook) that you want to register as the webhook
+url_dict = {"url": "https://b0c88906.ngrok.io/webhook"}
 
 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
