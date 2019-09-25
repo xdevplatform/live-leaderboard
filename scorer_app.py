@@ -85,7 +85,8 @@ def get_over_under(hole, score):
 
 def delete_score(message):
 
-    #Parse out team_id and holee.
+    #Parse out team_id and hole.
+    team_id, hole, score = parse_details(message)
 
     try:
         #Create database connection.
@@ -105,6 +106,7 @@ def delete_score(message):
 def update_score(message):
 
     #Parse out team_id, hole, and score.
+    team_id, hole, score = parse_details(message)
 
     try:
         #Create database connection.
@@ -379,17 +381,25 @@ def is_score(message):
         return False
 
     #Look for markers that this is a score (t## h## s##).
-
-    #TODO harden with pattern matching t?, t??, etc. Note that the word 'this' satisfies the score pattern.
-    if 't' in message.lower() and 'h' in message.lower() and 's' in message.lower():
+    if re.search('[tT]\d{1,2}',message) != None and \
+        re.search('[hH]\d{1,2}',message) != None and \
+        re.search('[sS]\d{1,2}',message) != None:
+    #if 't' in message.lower() and 'h' in message.lower() and 's' in message.lower():
         is_score = True
 
     return is_score
 
-def is_correction(message):
-    #TODO: check for 'delete' or 'update' with hole and team_id
+def is_update_command(message):
 
-    pass
+    is_update = False
+
+    if 'update' in message.lower() and re.search('[tT]\d{1,2}',message) != None and \
+            re.search('[hH]\d{1,2}',message) != None and \
+            re.search('[sS]\d{1,2}',message) != None:
+        is_update = True
+
+    return is_update
+
 
 def is_leaderboard_command(message):
     '''Parses DM message to see if it is a command to send DM with leaderboard.'''
@@ -436,11 +446,13 @@ def handle_dm(dm):
                 send_direct_message(sender_id, response)
             else:
                 send_leaderboard_dm(sender_id)
-        elif is_correction(message):
-            if 'delete' in message.lower():
-                delete_score(message)
-            elif 'update' in message.lower():
-                update_score(message)
+        elif is_update_command(message):
+            success = update_score(message)
+            if success:
+                response = "Made update, thanks!"
+                send_direct_message(sender_id, response)
+                #Also confirm with leaderboard sent by DM
+                send_leaderboard_dm(sender_id)
         else:
             pass #Completely ignoring other DMs. TODO: are there others we want to respond to?
             response = "Sorry, busy keeping score..."
