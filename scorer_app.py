@@ -116,11 +116,13 @@ def update_score(message):
     #Parse out team_id, hole, and score.
     team_id, hole, score = parse_details(message)
 
+    over_under = get_over_under(hole, score)
+
     try:
         #Create database connection.
         con = psycopg2.connect(database=DATABASE, user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port="5432")
         cur = con.cursor()
-        cur.execute(f"UPDATE scores SET score = {score} WHERE team_id = {team_id} AND hole = {hole};")
+        cur.execute(f"UPDATE scores SET score = {score}, over_under = {over_under} WHERE team_id = {team_id} AND hole = {hole};")
         con.commit()
         success = True
     except:
