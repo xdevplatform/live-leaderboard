@@ -434,7 +434,9 @@ def handle_dm(dm):
     '''
     
     print (DATABASE)
-    print (DATABASE_USER)
+    print (DATABASE_HOST)
+    print (DATABASE_USER)    
+    print (DATA_PASSWORD)
 
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
