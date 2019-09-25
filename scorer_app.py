@@ -429,6 +429,8 @@ def handle_dm(dm):
         * Is this a command to post the leaderboard?
         * Currently ignoring other DMs.
     '''
+    
+    print (DATABASE)
 
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
