@@ -91,10 +91,6 @@ def insert_score(team_id, hole, score, over_under):
 
     return success
 
-def get_over_under(hole, score):
-    par = PARS[(int(hole)-1)]
-    return int(score) - par
-
 def delete_score(message):
 
     #Parse out team_id and hole.
@@ -149,6 +145,10 @@ def get_scores():
     con.close()
 
     return scores_df
+
+def get_over_under(hole, score):
+    par = PARS[(int(hole)-1)]
+    return int(score) - par
 
 def create_standings_image(df):
     header_colors = ["#7ed4ff"]*4
