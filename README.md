@@ -11,4 +11,5 @@ Using the AAA, DM, and Post Tweet APIs, this thing listens for incoming scores, 
 + Set up (and document) ngrok for development stage.  
 + Add Tweet and DM functionality.
 + Compile scores and rank them.
++ Design 'leaderboard' with matplotlib and magic formatng tricks.
 + Implement 'update score' mechanism.
