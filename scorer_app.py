@@ -37,6 +37,7 @@ DATABASE_USER = os.getenv('DATABASE_USER', None)
 DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', None)
 
 if HOST_ACCOUNT_ID == None:
+    print ('Could not load from .env file, loading from local environment.')
     HOST_ACCOUNT_ID = os.environ.get('HOST_ACCOUNT_ID')
     CONSUMER_KEY = os.environ.get('CONSUMER_KEY')
     CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET')
@@ -431,6 +432,7 @@ def handle_dm(dm):
     '''
     
     print (DATABASE)
+    print (DATABASE_USER)
 
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
