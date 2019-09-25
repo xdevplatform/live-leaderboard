@@ -36,6 +36,17 @@ DATABASE_HOST = os.getenv('DATABASE_HOST', None)
 DATABASE_USER = os.getenv('DATABASE_USER', None)
 DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', None)
 
+if HOST_ACCOUNT_ID == None:
+    HOST_ACCOUNT_ID = os.environ.get('HOST_ACCOUNT_ID')
+    CONSUMER_KEY = os.environ.get('CONSUMER_KEY')
+    CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET')
+    ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN')
+    ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET')
+    DATABASE = os.environ.get('DATABASE')
+    DATABASE_HOST = os.environ.get('DATABASE_HOST')
+    DATABASE_USER = os.environ.get('DATABASE_USER')
+    DATABASE_PASSWORD = os.environ.get('DATABASE_PASSWORD')   
+
 #Set up tweepy client for sending Tweets and DMs.
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
