@@ -172,7 +172,7 @@ def create_standings_image(df):
     df.set_index("my_index",inplace = True)
     # plot table
     tab = table(ax, df, loc='center', cellLoc='center', colWidths=[0.17, 0.17, 0.17, 0.28],
-                    colColours=header_colors, cellColours=cell_colors, bbox=[0,-.1,1.05,1.22]
+                    colColours=header_colors, cellColours=cell_colors, bbox=[0,0,1.05,1.1]
                     )
     # set font manually
     tab.auto_set_font_size(False)
@@ -432,11 +432,6 @@ def handle_dm(dm):
         * Is this a command to post the leaderboard?
         * Currently ignoring other DMs.
     '''
-    
-    print (DATABASE)
-    print (DATABASE_HOST)
-    print (DATABASE_USER)    
-    print (DATABASE_PASSWORD)
 
     sender_id = dm['direct_message_events'][0]['message_create']['sender_id']
     message = dm['direct_message_events'][0]['message_create']['message_data']['text']
