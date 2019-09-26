@@ -161,7 +161,7 @@ def create_standings_image(df):
                   ]
     #Generate image.
     # set fig size
-    fig, ax = plt.subplots(figsize=(4.5,4.5))
+    fig, ax = plt.subplots(figsize=(5,5))
     # no axes
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
@@ -172,11 +172,11 @@ def create_standings_image(df):
     df.set_index("my_index",inplace = True)
     # plot table
     tab = table(ax, df, loc='center', cellLoc='center', colWidths=[0.17, 0.17, 0.17, 0.28],
-                    colColours=header_colors, cellColours=cell_colors, bbox=[0,0,1.05,1.1]
+                    colColours=header_colors, cellColours=cell_colors, bbox=[0,-0.03,1.03,1.14]
                     )
     # set font manually
     tab.auto_set_font_size(False)
-    tab.set_fontsize(10)
+    tab.set_fontsize(11)
 
     table_props = tab.properties()
     table_cells = table_props['child_artists']
@@ -518,22 +518,22 @@ def event_manager():
 
     return "200"
 
-if __name__ == '__main__':
-    # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.getenv('PORT', 5000))
-    # Logger code
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
-    app.run(host='0.0.0.0', port=port, debug=True)
+# if __name__ == '__main__':
+#     # Bind to PORT if defined, otherwise default to 5000.
+#     port = int(os.getenv('PORT', 5000))
+#     # Logger code
+#     gunicorn_logger = logging.getLogger('gunicorn.error')
+#     app.logger.handlers = gunicorn_logger.handlers
+#     app.logger.setLevel(gunicorn_logger.level)
+#     app.run(host='0.0.0.0', port=port, debug=True)
 
 
 ##Saved 'callers' for unit testing.
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
 #   print (get_over_under(1,6))
 
-#   create_standings()
+   create_standings()
 #
 # #   #Seeding database with data.  handle_score("t h s5")
 # #     handle_score("t1 h1 s4")
