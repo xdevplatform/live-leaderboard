@@ -370,11 +370,13 @@ def handle_score(message):
 # Done. Working as of 9/23 7:00pm MT
 def send_leaderboard_tweet():
     '''Uploads media to get media_id, then posts Tweet using requests library'''
+    # Call this to generate current standings and create 'scores.png' file
+    create_standings()
 
     resource_url = "https://api.twitter.com/1.1/statuses/update.json"
     message = "Here are the current standings:"
     # Calls get_media_id method to upload image and get media_id.
-    media_id = get_media_id("./img/scores.png")
+    media_id = get_media_id('./img/scores.png')
     payload = {"status": message, "media_ids": media_id}
 
     response = requests.post(resource_url, auth=USER_AUTH, params=payload)
