@@ -172,7 +172,7 @@ def create_standings_image(df):
     df.set_index("my_index",inplace = True)
     # plot table
     tab = table(ax, df, loc='center', cellLoc='center', colWidths=[0.17, 0.17, 0.17, 0.28],
-                    colColours=header_colors, cellColours=cell_colors, bbox=[0,0,1,1.1]
+                    colColours=header_colors, cellColours=cell_colors, bbox=[0,0,1,1.05]
                     )
     # set font manually
     tab.auto_set_font_size(False)
