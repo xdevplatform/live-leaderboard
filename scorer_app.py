@@ -10,8 +10,10 @@ import re
 import random
 import time
 
+#Flask app!
 from flask import Flask, request, send_from_directory, make_response
-import matplotlib
+
+import matplotlib #Make some tables...
 matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import numpy as np
@@ -56,8 +58,11 @@ api = tweepy.API(auth)
 # Generate user context auth (OAuth1)
 USER_AUTH = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
+#TODO: --> config.dat
 PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
+SCORER_ACCOUNTS = [] #Add scores to config.dat
 
+EAGLE_IMAGES = ['./static/eagle1.jpg', './static/eagle2.jpg', './static/eagle3.jpg', './static/eagle4.jpg']
 BIRDIE_IMAGES = ['./static/birdie1.jpg', './static/birdie2.jpg', './static/birdie3.jpg', './static/birdie4.jpg']
 
 def get_team_scorers():
