@@ -1,7 +1,20 @@
 # TweetScorer
 Using the AAA, DM, and Post Tweet APIs, this thing listens for incoming scores, ranks them, and Tweets the rankings. 
 
+This example was written to keep golf scores, but the underlying patterns are general enough to serve many other use cases. 
+
 # Notes
+
+## Next steps
++ Handle hole-in-holes ;)
++ Revisit configuration details.
+  + Handles can indicate the team, so could reduce input.
++ More 'Marshal' commands.
+  + Database actions - initialize, top 10s, and stats.
+  
+
+
+
 
 ## Done
 + Set up @TwitterDev private repository (welcome!).
