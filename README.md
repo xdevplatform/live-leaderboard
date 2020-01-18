@@ -1,5 +1,5 @@
 # TweetScorer
-Using the AAA, DM, and Post Tweet APIs, this thing listens for incoming scores, ranks them, and Tweets the rankings. 
+Using the AAA, Direct Message, and Post Tweet APIs, this thing listens for incoming scores, ranks them, and Tweets the rankings. This app supports public announcements and private data/vote submissions.
 
 This example was written to keep golf scores, but the underlying patterns are general enough to serve many other use cases. 
 
