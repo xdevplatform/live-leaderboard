@@ -65,16 +65,6 @@ SCORER_ACCOUNTS = [] #Add scores to config.dat
 EAGLE_IMAGES = ['./static/eagle1.jpg', './static/eagle2.jpg', './static/eagle3.jpg', './static/eagle4.jpg']
 BIRDIE_IMAGES = ['./static/birdie1.jpg', './static/birdie2.jpg', './static/birdie3.jpg', './static/birdie4.jpg']
 
-def get_team_scorers():
-    '''
-    Current list of 'scorers' (folks who gotta know how to run this app.). Note that this list's indices tell us the team number).
-    We know who is reporting so we do nothave to require team id or name.
-    '''
-    #TODO if we use this and the order matters, these need to be updated to reflect new team order.
-    #Updated on Sunday
-    scorers = ['scorer1', 'scorer2', 'scorer3', 'scorer4', 'scorer5', 'scorer6', 'scorer7','scorer8','scorer9', 'scorer10','scorer11', 'scorer12','WHO', 'WHO','johnd','gmax', 'maeloveholt','jpodnos','ericmartinyc']
-    return scorers
-
 def insert_score(team_id, hole, score, over_under):
     ''' Database wrapper for storing scores. '''
 
@@ -138,7 +128,7 @@ def update_score(message):
     return success
 
 def get_scores():
-    '''Database wrpper for retrieving ALL scores.'''
+    '''Database wrapper for retrieving ALL scores.'''
 
     #Create database connection.
     sql = "SELECT * FROM scores;"
@@ -193,12 +183,6 @@ def create_standings_image(df):
     if not os.path.exists('./img'):
         os.makedirs('./img')
     plt.savefig('./img/scores.png')
-
-# def create_standings_csv(df):
-#     df.to_csv('./csv/scores.csv', index=False)
-#
-# def create_standings_html(df):
-#     df.to_html('./html/scores_v0.html')
 
 def get_last_hole(team, holes_completed):
     #Important note: team number indicates the hole that the team started on.
@@ -261,8 +245,6 @@ def create_standings():
     df_sorted.loc[df_sorted.Score > 0, 'Score'] = '+' + df_sorted['Score'].astype(str)
 
     create_standings_image(df_sorted)
-    #create_standings_csv(df_sorted)
-    #create_standings_html(df_sorted)
 
 # Takes generated image from above method and upload to Twitter, return media_id.
 def get_media_id(image_path):
@@ -388,7 +370,6 @@ def send_leaderboard_tweet():
 def send_leaderboard_dm(recipient_id):
     create_standings()
     media_id = get_media_id('./img/scores.png')
-    #message = "Here are the currrent standings..."
 
     send_direct_message(recipient_id, '', media_id)
 
