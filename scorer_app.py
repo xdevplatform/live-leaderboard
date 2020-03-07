@@ -72,8 +72,7 @@ def get_team_scorers():
     '''
     #TODO if we use this and the order matters, these need to be updated to reflect new team order.
     #Updated on Sunday
-    scorers = ['arisirenita', 'lindspanther', 'evanr', 'snowman', 'BoomerMurray', 'zachnm', 'noahwinter13','kennykhlee','WHO', 'WHO','kathleenso', 'happycamper','WHO', 'WHO','johnd','gmax', 'maeloveholt','jpodnos','ericmartinyc']
-    #No longer scorers?  'ThomasMac_IV', 'robdehuff','traviszachary'
+    scorers = ['scorer1', 'scorer2', 'scorer3', 'scorer4', 'scorer5', 'scorer6', 'scorer7','scorer8','scorer9', 'scorer10','scorer11', 'scorer12','WHO', 'WHO','johnd','gmax', 'maeloveholt','jpodnos','ericmartinyc']
     return scorers
 
 def insert_score(team_id, hole, score, over_under):
