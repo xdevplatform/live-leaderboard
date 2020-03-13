@@ -23,7 +23,11 @@ env_name = "prod"
 resource_url = f"https://api.twitter.com/1.1/account_activity/all/{env_name}/webhooks.json"
 
 # Provide the web app URL (including path e.g., /webhook) that you want to register as the webhook
-url_dict = {"url": "https://<URL>/webhook"}
+print("Provide your web app URL:")
+web_app_url = input()
+
+# Initiates dictionary (using dict constructor) with url key and provided web app url value
+url_dict = dict(url = web_app_url)
 
 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
