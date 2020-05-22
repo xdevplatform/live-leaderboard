@@ -27,6 +27,29 @@ So, here is what you'll need to get started:
   + Consumer API keys for your app. 
   + Get to know the Account Activity endpoint: https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/guides/getting-started-with-webhooks
   + Have a Twitter account to host the scorer app, and register that account with the AAA. For this prototype we used the [@HackerScorer](https://twitter.com/HackerScorer) account. 
+  
+  
+Configuration details
+=====================
+
+```
+HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
+CONSUMER_KEY = os.getenv('CONSUMER_KEY', None)
+CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', None) #Also needed for CRC.
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
+ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET', None)
+DATABASE = os.getenv('DATABASE', None)
+DATABASE_HOST = os.getenv('DATABASE_HOST', None)
+DATABASE_USER = os.getenv('DATABASE_USER', None)
+DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', None)
+```
+
+
+```python
+#TODO: --> config.dat
+PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
+```
+
 
 Using the Twitter chatbot
 =========================
