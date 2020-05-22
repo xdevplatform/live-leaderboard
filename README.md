@@ -1,9 +1,9 @@
 Live Leaderboard
 =================
 
-Using the Account Activity, Direct Message, and Post Tweet APIs, this Twitter chatbot listens for incoming scores, ranks them, and Tweets the rankings. This app supports public announcements and private data/vote submissions.
+Using the Account Activity, Direct Message, and Post Tweet APIs, this Twitter chatbot listens for incoming scores, ranks them, and Tweets the rankings. This app supports public 'leaderboard' announcements and private data/vote submissions.
 
-This example was written to keep golf scores, but the underlying patterns are general enough to serve many other use cases. 
+This example was written to keep golf scores, but the underlying patterns are general enough to serve many other use cases. Other events come to mind, such as soccer and bowling tournaments. Scavenger hunts are a good use case match, where updates are sent in from the field. Since this protoype is based on scores/votes being privately submitted, these patterns are the building blocks for supporting any election event. 
 
 **What does the bot do?**
 + Keeps track of all teams scores in real-time on Twitter
