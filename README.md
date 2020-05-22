@@ -1,14 +1,20 @@
-# Live Leaderboard
+Live Leaderboard
+=================
+
 Using the Account Activity, Direct Message, and Post Tweet APIs, this Twitter chatbot listens for incoming scores, ranks them, and Tweets the rankings. This app supports public announcements and private data/vote submissions.
 
 This example was written to keep golf scores, but the underlying patterns are general enough to serve many other use cases. 
 
-To learn more about the event this pilot was developed for, see the following: 
+**What does the bot do?**
++ Keeps track of all teams scores in real-time on Twitter
++ Tweets out updates (Leaderboards and Birdie Alerts!) 
++ Foster engagement and get people talking about the event and interacting with the scorer account. 
 
+**To learn more about the event this pilot was developed for, see the following:** 
 + The use case inspiration for this code base is HERE [insights.twitter.com].
 + For more discussion of the code developed for this pilot, see HERE [dev.to/building-a-live-leaderboard-on-Twitter]
 
-Getting started
+Getting started 
 ===============
 
 So, here is what you'll need to get started:
@@ -21,6 +27,21 @@ So, here is what you'll need to get started:
   + Consumer API keys for your app. 
   + Get to know the Account Activity endpoint: https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/guides/getting-started-with-webhooks
   + Have a Twitter account to host the scorer app, and register that account with the AAA. For this prototype we used the [@HackerScorer](https://twitter.com/HackerScorer) account. 
+
+Becoming a scorer
+=================
+Follow the account of the event scorer. 
+
+Submitting a score
+==================
+
+At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct Message (DM) with this information formatted exactly like this: ```t6 h6 s3```
+
+**Where:**  
+*t = Your team number.* This doesn't change. Your team number is indicated by the hole you started on. Team 6 started on hole 6.
+*h = Hole number you are reporting a score for*
+*s = Your score. The number of strokes.*
+
 
 FAQ
 ===
