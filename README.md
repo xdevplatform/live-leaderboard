@@ -30,17 +30,23 @@ So, here is what you'll need to get started:
 
 Becoming a scorer
 =================
-Follow the account of the event scorer. 
+Follow the account of the event scorer. Learn how to submit scores, make updates, and be familiar with the FAQ section below. 
 
 Submitting a score
 ==================
 
-At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct Message (DM) with this information formatted exactly like this: ```t6 h6 s3```
+At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct Message (DM) with your team number, the hole you just completed, and the number of strokes needed to complete the hole. Say you are team 6, you just completed hole 12 in four strokes. This information should be formatted exactly like this: ```t6 h12 s4```
 
 **Where:**  
-*t = Your team number.* This doesn't change. Your team number is indicated by the hole you started on. Team 6 started on hole 6.
-*h = Hole number you are reporting a score for*
-*s = Your score. The number of strokes.*
++ *t# = Your team number.* This doesn't change. Your team number is indicated by the hole you started on. Team 6 started on hole 6.
++ *h# = Hole number you are reporting a score for*
++ *s# = Your score. The number of strokes.*
+
+Correcting a score
+==================
+Mistakes happen. Typing with gloves on is problematic. So, what happens when an incorrect score is submitted? Well, you just send an ```update``` DM with the correct scoring. That's it. 
+
+For example, you are on team 17 and your team got a birdie on the seventh hole, a 5-par hole. The team scorer incorrectly submitted a ```t17 h7 s5``` score. To correct this, the following DM is sent: ```t17 h7 s4```. 
 
 
 FAQ
@@ -50,7 +56,7 @@ FAQ
 That's ok! Just send a DM for any hole you forgot to submit. 
 
 **What if I enter my score wrong?**
-TRY NOT TO. Enter your team number, hole, and score very carefully. If you mess up, send an 'update' DM. For example, if you DM'ed ```t6 h4 s5``` but the correct score was ```4```, DM ```update t6 h4 s4```. 
+Try not to. Enter your team number, hole, and score very carefully. If you mess up, send an 'update' DM. For example, if you DM'ed ```t6 h4 s5``` but the correct score was ```4```, DM ```update t6 h4 s4```. 
 
 **How do I know if I did it right?** 
 A correctly formatted score receives a confirmation DM (currently 'Thanks, we got it!"), and if that is not received, then the score was not accepted. 
