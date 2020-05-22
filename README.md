@@ -28,12 +28,14 @@ So, here is what you'll need to get started:
   + Get to know the Account Activity endpoint: https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/guides/getting-started-with-webhooks
   + Have a Twitter account to host the scorer app, and register that account with the AAA. For this prototype we used the [@HackerScorer](https://twitter.com/HackerScorer) account. 
 
-Becoming a scorer
-=================
+Using the Twitter chatbot
+=========================
+
+## Becoming a scorer
+
 Follow the account of the event scorer. Learn how to submit scores, make updates, and be familiar with the FAQ section below. 
 
-Submitting a score
-==================
+## Submitting a score
 
 At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct Message (DM) with your team number, the hole you just completed, and the number of strokes needed to complete the hole. Say you are team 6, you just completed hole 12 in four strokes. This information should be formatted exactly like this: ```t6 h12 s4```
 
@@ -42,15 +44,14 @@ At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct 
 + *h# = Hole number you are reporting a score for*
 + *s# = Your score. The number of strokes.*
 
-Correcting a score
-==================
+## Correcting a score
+
 Mistakes happen. Typing with gloves on is problematic. So, what happens when an incorrect score is submitted? Well, you just send an ```update``` DM with the correct scoring. That's it. 
 
 For example, you are on team 17 and your team got a birdie on the seventh hole, a 5-par hole. The team scorer incorrectly submitted a ```t17 h7 s5``` score. To correct this, the following DM is sent: ```t17 h7 s4```. 
 
 
-FAQ
-===
+# FAQ
 
 **What if I forget to DM the bot after playing a hole?** 
 That's ok! Just send a DM for any hole you forgot to submit. 
