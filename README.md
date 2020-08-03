@@ -71,7 +71,7 @@ At the end of every hole, send the scorer account (e.g. @HackerScorer) a Direct 
 
 Mistakes happen. Typing with gloves on is problematic. So, what happens when an incorrect score is submitted? Well, you just send an ```update``` DM with the correct scoring. That's it. 
 
-For example, you are on team 17 and your team got a birdie on the seventh hole, a 5-par hole. The team scorer incorrectly submitted a ```t17 h7 s5``` score. To correct this, the following DM is sent: ```t17 h7 s4```. 
+For example, you are on team 17 and your team got a birdie on the seventh hole, a 5-par hole. The team scorer incorrectly submitted a ```t17 h7 s5``` score. To correct this, the following DM is sent: ```update t17 h7 s4```. 
 
 
 # FAQ
