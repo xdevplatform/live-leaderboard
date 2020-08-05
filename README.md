@@ -22,11 +22,11 @@ So, here is what you'll need to get started:
 + Python3 environment with the Flask web framework.
 + Somewhere to host the app. For this project we used Heroku.
 + Twitter details:
-+ Twitter Developer account: if you don’t have one already, you can apply for one [HERE]().
-  + Create a Twitter App if you don't already have one.
-  + Consumer API keys for your app. 
-  + Get to know the Account Activity endpoint: https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/guides/getting-started-with-webhooks
-  + Have a Twitter account to host the scorer app, and register that account with the AAA. For this prototype we used the [@HackerScorer](https://twitter.com/HackerScorer) account. 
+  + Twitter Developer account: if you don’t have one already, you can apply for one [HERE]().
+    + Create a Twitter App if you don't already have one.
+    + Consumer API keys for your app. 
+    + Get to know the Account Activity endpoint: https://developer.twitter.com/en/docs/accounts-and-users/subscribe-account-activity/guides/getting-started-with-webhooks
+    + Have a Twitter account to host the scorer app, and register that account with the AAA. For this prototype we used the [@HackerScorer](https://twitter.com/HackerScorer) account. 
   
   
 Configuration details
