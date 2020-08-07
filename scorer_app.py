@@ -262,7 +262,6 @@ def get_media_id(image_path):
 
     return media_id
 
-#TODO - eliminate?
 def send_tweet(message, media_id):
     '''Posts Tweet using requests library'''
 
@@ -272,6 +271,7 @@ def send_tweet(message, media_id):
     response = requests.post(resource_url, auth=USER_AUTH, params=payload)
 
 def send_direct_message(recipient_id, message, media_id=None):
+    '''Sends DMs with tweepy library'''
 
     if media_id == None:
         api.send_direct_message(recipient_id, message)
@@ -328,7 +328,6 @@ def parse_details(message):
             have_score = True
             score = score_token[0][1:]
 
-
     return team_id, hole, score
 
 def handle_score(message):
@@ -353,7 +352,7 @@ def handle_score(message):
 
     return success
 
-# Done. Working as of 9/23 7:00pm MT
+# Done. Working as of 9/23 7:00pm MT. The night before the event. Ah, the memories!
 def send_leaderboard_tweet():
     '''Uploads media to get media_id, then posts Tweet using requests library'''
     # Call this to generate current standings and create 'scores.png' file
@@ -513,27 +512,3 @@ if __name__ == '__main__':
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
     app.run(host='0.0.0.0', port=port, debug=True)
-
-
-##Saved 'callers' for unit testing.
-# if __name__ == '__main__':
-
-#   print (get_over_under(1,6))
-
-#   create_standings()
-#
-# #   #Seeding database with data.  handle_score("t h s5")
-# #     handle_score("t1 h1 s4")
-# #     handle_score("t1 h2 s5")
-# #     handle_score("t1 h3 s4")
-#
-    # for h in range(18):
-    #     hole = h + 1
-    #     for t in range(18):
-    #         team = t + 1
-    #         score = random.randrange(PARS[int(hole-1)]-1, PARS[int(hole-1)]+4, 1)
-    #
-    #         handle_score(f"t{team} h{hole} s{score}")
-    #         time.sleep(2)
-
-
