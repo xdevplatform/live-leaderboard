@@ -95,6 +95,31 @@ Submit the TOTAL number of strokes that your team took. Do NOT subtract par. For
 YES! This is your final scorecard for determining the winning team at the end. This bot is an experiment and for fun.
 
 
+### Some saved code used for unit testing 
+
+```python
+#Some code used for for unit testing.
+if __name__ == '__main__':
+
+   #Seeding database with data.  
+   handle_score("t1 h1 s4")
+   handle_score("t1 h2 s5")
+   handle_score("t1 h3 s4")
+
+   #Randomizing an entire tournament.
+   for h in range(18):
+      hole = h + 1
+      for t in range(18):
+         team = t + 1
+          score = random.randrange(PARS[int(hole-1)]-1, PARS[int(hole-1)]+4, 1)
+    
+          handle_score(f"t{team} h{hole} s{score}")
+          time.sleep(2)
+
+   create_standings()
+
+
+```
 
 
 
