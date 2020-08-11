@@ -65,6 +65,7 @@ SCORER_ACCOUNTS = [] #Add scores to config.dat
 EAGLE_IMAGES = ['./static/eagle1.jpg', './static/eagle2.jpg', './static/eagle3.jpg', './static/eagle4.jpg']
 BIRDIE_IMAGES = ['./static/birdie1.jpg', './static/birdie2.jpg', './static/birdie3.jpg', './static/birdie4.jpg']
 
+    
 def insert_score(team_id, hole, score, over_under):
     ''' Database wrapper for storing scores. '''
 
@@ -85,6 +86,7 @@ def insert_score(team_id, hole, score, over_under):
 
     return success
 
+
 def delete_score(message):
 
     #Parse out team_id and hole.
@@ -104,6 +106,7 @@ def delete_score(message):
     con.close()
 
     return success
+
 
 def update_score(message):
 
@@ -127,6 +130,7 @@ def update_score(message):
 
     return success
 
+
 def get_scores():
     '''Database wrapper for retrieving ALL scores.'''
 
@@ -142,47 +146,48 @@ def get_scores():
 
     return scores_df
 
+
 def get_over_under(hole, score):
     par = PARS[(int(hole)-1)]
     return int(score) - par
 
+
 def create_standings_image(df):
     header_colors = ["#7ed4ff"]*4
+    # Table row striping
     cell_colors = [["#ffffff"]*4 
                     if x % 2 == 0
                     else ["#D3D3D3"]*4
                     for x in range(0,df.shape[0])
                   ]
-    #Generate image.
-    # set fig size
+    # Set fig size
     fig, ax = plt.subplots(figsize=(5,5))
-    # no axes
+
+    # Hide axes
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
-    # no frame
+
+    # Hide frame
     ax.set_frame_on(False)
+
     # Set index to place list
     df["my_index"] = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th']
     df.set_index("my_index",inplace = True)
-    # plot table
+
+    # Plot table
     tab = table(ax, df, loc='center', cellLoc='center', colWidths=[0.17, 0.17, 0.17, 0.28],
                     colColours=header_colors, cellColours=cell_colors, bbox=[0,0,1,1.05]
                     )
-    # set font manually
+    
+    # Set font manually
     tab.auto_set_font_size(False)
     tab.set_fontsize(11)
-
-    table_props = tab.properties()
-    table_cells = table_props['child_artists']
-    for cell in table_cells: cell.set_height(0.1)
-    for i,cell in enumerate(table_cells):
-        if (i+1) % 5 == 0:
-            cell.set_fill('k')
 
     # save the result
     if not os.path.exists('./img'):
         os.makedirs('./img')
     plt.savefig('./img/scores.png')
+
 
 def get_last_hole(team, holes_completed):
     #Important note: team number indicates the hole that the team started on.
@@ -193,6 +198,7 @@ def get_last_hole(team, holes_completed):
         last_hole = last_hole - 18
 
     return last_hole
+
 
 def create_standings():
     '''This function does the work of building a leaderboard. Recipe:
@@ -246,7 +252,7 @@ def create_standings():
 
     create_standings_image(df_sorted)
 
-# Takes generated image from above method and upload to Twitter, return media_id.
+
 def get_media_id(image_path):
     '''Uploads media using requests library'''
     # Open the image
@@ -262,6 +268,7 @@ def get_media_id(image_path):
 
     return media_id
 
+
 def send_tweet(message, media_id):
     '''Posts Tweet using requests library'''
 
@@ -269,6 +276,7 @@ def send_tweet(message, media_id):
     payload = {"status": message, "media_ids": media_id}
 
     response = requests.post(resource_url, auth=USER_AUTH, params=payload)
+
 
 def send_direct_message(recipient_id, message, media_id=None):
     '''Sends DMs with tweepy library'''
@@ -330,6 +338,7 @@ def parse_details(message):
 
     return team_id, hole, score
 
+
 def handle_score(message):
     '''Parses and stores score.'''
 
@@ -366,11 +375,13 @@ def send_leaderboard_tweet():
 
     response = requests.post(resource_url, auth=USER_AUTH, params=payload)
 
+
 def send_leaderboard_dm(recipient_id):
     create_standings()
     media_id = get_media_id('./img/scores.png')
 
     send_direct_message(recipient_id, '', media_id)
+
 
 def is_score(message):
     '''Parses DM message and sees if it is a score.'''
@@ -388,6 +399,7 @@ def is_score(message):
         is_score = True
 
     return is_score
+
 
 def is_update_command(message):
 
@@ -411,6 +423,7 @@ def is_leaderboard_command(message):
         is_leaderboard_command = True
 
     return is_leaderboard_command
+
 
 def handle_dm(dm):
     '''Determines what kind of DM this is.

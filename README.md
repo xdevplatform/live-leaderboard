@@ -37,6 +37,8 @@ So, here is what you'll need to get started:
 Configuration details
 =====================
 
+The app will first try to read from a `.env` file using `python-dotenv` package, but can use environment variables if no .env file is found. Below are the config details captured by the .env file.
+
 ```
 HOST_ACCOUNT_ID = os.getenv('HOST_ACCOUNT_ID', None)  #OR os.environ.get
 CONSUMER_KEY = os.getenv('CONSUMER_KEY', None)
@@ -48,12 +50,24 @@ DATABASE_HOST = os.getenv('DATABASE_HOST', None)
 DATABASE_USER = os.getenv('DATABASE_USER', None)
 DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', None)
 ```
-
+The par scores for a given course must be set in the main app file (see below).
 
 ```python
-#TODO: --> config.dat
+# TODO: --> config.dat
 PARS = [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 5, 5, 3, 4]
 ```
+
+Helper scripts
+==============
+
+The `/scripts` folder contains simple helper scripts for interacting with the Account Activity API. If you choose the free tier of AAAPI access, you may find yourself deleting and registering webhooks frequently as you move from local testing (ngrok) to your deployed app (heroku).
+
+The scripts load for OAuth 1.0 details from a `.env` file, using `python-dotenv` package, and make http calls using the `requests` library. 
+
+1. Register a webhook: `python register_webhook.py` (specify env name if using premium)
+2. Subscribe app to own activity (@handle tied to app): `python subscribe_owning_user.py`
+3. Get webhook info: `python get_webhooks.py` 
+4. Delete webhook registration: `python delete_webhook.py` (prompts for webhook_id as input)
 
 
 Using the Twitter chatbot
