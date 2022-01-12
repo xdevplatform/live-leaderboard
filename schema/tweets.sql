@@ -5,5 +5,5 @@ CREATE TABLE scores(
   hole integer,
   score integer,
   time_stamp TIMESTAMP,
-  over_under integerMP
+  over_under integer
 );
